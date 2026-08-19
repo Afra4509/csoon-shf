@@ -1,0 +1,439 @@
+/* ── JuriPanel.css v3 — SHF Official Scoring Form ── */
+
+.juri-panel {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+/* ── Sidebar ── */
+.juri-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 200;
+  transition: transform 0.25s ease;
+  overflow-y: auto;
+}
+
+.juri-sidebar-logo {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.juri-logo-img {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.juri-logo-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.juri-sidebar-nav {
+  padding: 12px 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.juri-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.juri-nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.juri-nav-item--active {
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.juri-sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px;
+}
+
+/* ── Overlay mobile ── */
+.juri-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 199;
+}
+
+/* ── Main ── */
+.juri-main {
+  flex: 1;
+  margin-left: 240px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.juri-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.juri-menu-btn { display: none; }
+
+.juri-content {
+  flex: 1;
+  padding: 28px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Tab ── */
+.juri-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.juri-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ── Bidang badge ── */
+.juri-bidang-badge {
+  padding: 14px 20px !important;
+}
+
+/* ── Progress card ── */
+.juri-progress-card { padding: 24px !important; }
+
+.juri-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.juri-progress-title { font-weight: 700; font-size: 0.9375rem; }
+.juri-progress-sub   { color: var(--text-muted); font-size: 0.8125rem; margin-top: 2px; }
+.juri-progress-pct   { font-size: 1.5rem; font-weight: 800; }
+
+.juri-progress-bar-wrap { margin-bottom: 8px; }
+
+.juri-progress-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.juri-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+.juri-done-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--emerald-400);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+/* ── Stats ── */
+.juri-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.juri-stat { padding: 20px !important; text-align: center; }
+.juri-stat-value { font-size: 1.75rem; font-weight: 800; }
+.juri-stat-label { font-size: 0.8125rem; color: var(--text-muted); margin-top: 4px; }
+
+/* ── Layout input nilai ── */
+.juri-input-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Picker ── */
+.juri-picker { padding: 0 !important; overflow: hidden; }
+
+.juri-picker-search {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.juri-picker-list {
+  overflow-y: auto;
+  max-height: 540px;
+}
+
+.juri-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.12s;
+  gap: 8px;
+}
+
+.juri-picker-item:hover        { background: var(--bg-hover); }
+.juri-picker-item--active      { background: var(--accent-subtle); }
+
+.juri-picker-item-name  { font-weight: 600; font-size: 0.875rem; color: var(--text-primary); }
+.juri-picker-item-meta  { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+
+/* ── Form penilaian ── */
+.juri-form-wrap { display: flex; flex-direction: column; gap: 16px; }
+
+.form-penilaian-header {
+  padding: 20px !important;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.form-penilaian-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.form-penilaian-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.form-penilaian-info strong { color: var(--text-primary); }
+
+.juri-already-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--emerald-400)18;
+  color: var(--emerald-400);
+  border: 1px solid var(--emerald-400)30;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Tabel penilaian ── */
+.tabel-penilaian-wrap { overflow: hidden; padding: 0 !important; }
+
+.tabel-penilaian {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabel-penilaian th {
+  background: var(--bg-hover);
+  padding: 12px 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.th-no       { width: 48px; }
+.th-kriteria { text-align: left !important; }
+.th-jali, .th-khafi { width: 90px; }
+.th-total    { width: 100px; }
+
+.kriteria-row td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.kriteria-row:last-child td { border-bottom: none; }
+
+.kriteria-row--filled { background: var(--accent-subtle)40; }
+
+.td-no    { text-align: center; color: var(--text-muted); font-weight: 700; width: 48px; }
+.td-label { font-weight: 500; }
+.td-score { text-align: center; width: 90px; }
+.td-subtotal { text-align: center; width: 100px; }
+
+.score-input {
+  width: 72px;
+  padding: 6px 8px;
+  background: var(--bg-base);
+  border: 1.5px solid var(--border-default);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  text-align: center;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+
+.score-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.subtotal-value { font-weight: 700; color: var(--accent-primary); }
+.subtotal-empty { color: var(--text-muted); }
+
+/* ── Summary tabel ── */
+.tabel-summary {
+  border-top: 2px solid var(--border-subtle);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tabel-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.tabel-summary-total {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.pengurangan-input { width: 80px !important; }
+
+/* ── Catatan ── */
+.catatan-wrap { padding: 20px !important; }
+
+.catatan-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.catatan-input {
+  resize: vertical;
+  margin-top: 0;
+  min-height: 100px;
+}
+
+/* ── Form actions ── */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.saved-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--emerald-400);
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* ── Juri empty form ── */
+.juri-form-empty {
+  padding: 60px 20px !important;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Badge xs ── */
+.badge-xs {
+  font-size: 0.625rem;
+  padding: 2px 6px;
+}
+
+/* ── Mobile ── */
+@media (max-width: 900px) {
+  .juri-sidebar {
+    transform: translateX(-100%);
+  }
+  .juri-sidebar--open {
+    transform: translateX(0);
+  }
+  .juri-main { margin-left: 0; }
+  .juri-menu-btn { display: flex !important; }
+  .juri-input-layout { grid-template-columns: 1fr; }
+  .juri-stats-row { grid-template-columns: repeat(3, 1fr); }
+  .juri-picker { max-height: 300px; overflow-y: auto; }
+}
+
+@media (max-width: 500px) {
+  .juri-stats-row { grid-template-columns: 1fr 1fr; }
+  .juri-content { padding: 16px 12px; }
+}

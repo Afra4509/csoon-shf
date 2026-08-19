@@ -1,0 +1,56 @@
+.qr-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-display__frame {
+  position: relative;
+  padding: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px);
+}
+
+.qr-display__inner {
+  position: relative;
+  z-index: 1;
+}
+
+.qr-display__glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(
+    ellipse at center,
+    var(--accent-glow) 0%,
+    transparent 70%
+  );
+  opacity: 0.4;
+  animation: glow-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.qr-display__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.qr-display__name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.qr-display__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}

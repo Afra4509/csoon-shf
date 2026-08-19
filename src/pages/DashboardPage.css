@@ -1,0 +1,251 @@
+/* DashboardPage.css v3 */
+
+.dashboard-page { min-height: 100vh; background: var(--bg-base); }
+
+.dashboard-content { padding-bottom: 60px; }
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.dashboard-header__greet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.dashboard-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.dashboard-main  { display: flex; flex-direction: column; gap: 20px; }
+.dashboard-sidebar { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Not scored ── */
+.not-scored {
+  padding: 60px 20px !important;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.not-scored__icon { color: var(--text-muted); margin-bottom: 4px; }
+
+/* ── Total score card ── */
+.total-score-card {
+  padding: 28px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.total-score-card__left { flex: 1; }
+
+.total-score-card__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.total-score-card__value {
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.total-score-card__grade {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 10px;
+}
+
+.total-score-card__ring { flex-shrink: 0; }
+
+/* ── Status chips ── */
+.bidang-status-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bidang-status-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Bidang score cards ── */
+.bidang-card {
+  margin-bottom: 12px;
+  overflow: hidden;
+  padding: 0 !important;
+  transition: box-shadow 0.2s;
+}
+
+.bidang-card:last-child { margin-bottom: 0; }
+
+.bidang-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.bidang-card__label { font-weight: 700; font-size: 0.9375rem; }
+.bidang-card__max   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+.bidang-card__right { display: flex; align-items: center; }
+
+.bidang-card__score {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.bidang-card__max-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.bidang-card__pending {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.bidang-card__detail {
+  border-top: 1px solid var(--border-subtle);
+  padding: 16px 20px;
+}
+
+/* ── Kriteria detail ── */
+.bidang-kriteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.bidang-kriteria-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  gap: 8px;
+}
+
+.bidang-kriteria-label { color: var(--text-muted); flex: 1; }
+
+.bidang-kriteria-scores {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+
+.kriteria-jali  { color: var(--text-muted); background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; }
+.kriteria-khafi { color: var(--text-muted); background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; }
+.kriteria-sub   { font-weight: 700; font-size: 0.875rem; }
+
+/* ── Summary ── */
+.bidang-summary {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bidang-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.bidang-summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* ── Catatan ── */
+.bidang-catatan {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.bidang-catatan-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bidang-catatan-text {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.score-ring { position: relative; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-sidebar { order: -1; }
+  .total-score-card { flex-direction: column; align-items: flex-start; }
+  .total-score-card__value { font-size: 2.25rem; }
+}
+
+@media (max-width: 500px) {
+  .bidang-status-row { flex-direction: column; }
+  .bidang-card__header { flex-direction: column; align-items: flex-start; }
+}
