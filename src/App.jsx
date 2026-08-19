@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import HomePage        from './pages/HomePage';
 import LoginPage       from './pages/LoginPage';
@@ -12,8 +12,20 @@ import RankingPage     from './pages/RankingPage';
 
 /* ── Route Guards ── */
 function ProtectedPeserta({ children }) {
-  const { user, loading } = useAuthStore();
-  if (loading) return <FullScreenLoader />;
+  const { user, loading, loginByRef } = useAuthStore();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const ref = query.get('ref');
+  
+  const [checkingRef, setCheckingRef] = useState(!!ref && !user);
+
+  useEffect(() => {
+    if (ref && !user) {
+      loginByRef(ref).finally(() => setCheckingRef(false));
+    }
+  }, [ref, user, loginByRef]);
+
+  if (loading || checkingRef) return <FullScreenLoader />;
   if (!user || user.role !== 'peserta') return <Navigate to="/login" replace />;
   return children;
 }

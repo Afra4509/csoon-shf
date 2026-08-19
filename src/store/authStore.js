@@ -100,9 +100,34 @@ export const useAuthStore = create((set, get) => ({
       set({ loading: false, error: 'Akun ini bukan akun peserta.' });
       return { success: false };
     }
-
     return { success: true };
   },
+
+  // ── Auto Login Peserta (by QR Code ref ID) ──────────────────
+  loginByRef: async (participantId) => {
+    set({ loading: true, error: null });
+    const { data: participant } = await supabaseAdmin
+      .from('participants')
+      .select('*')
+      .eq('id', participantId)
+      .single();
+
+    if (participant) {
+      set({
+        user:    { ...participant, role: 'peserta' },
+        role:    'peserta',
+        isAdmin: false,
+        isJuri:  false,
+        loading: false,
+        error:   null,
+      });
+      return { success: true };
+    }
+    
+    set({ loading: false, error: 'Peserta tidak ditemukan.' });
+    return { success: false };
+  },
+
 
   // ── Login Juri (by username) ───────────────────────────────
   loginJuri: async (username, password) => {
