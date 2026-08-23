@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import ParticleBackground from '../components/ParticleBackground';
 import LiveTicker from '../components/LiveTicker';
 import GallerySection from '../components/GallerySection';
+import { useAuthStore } from '../store/authStore';
 import './HomePage.css';
 
 const INFO_CARDS = [
@@ -41,6 +42,14 @@ const STATS = [
 ];
 
 export default function HomePage() {
+  const { user } = useAuthStore();
+
+  const getDashboardLink = () => {
+    if (user?.role === 'admin') return '/admin';
+    if (user?.role === 'juri') return '/juri';
+    return '/dashboard';
+  };
+
   return (
     <div className="home">
       <Navbar />
@@ -83,10 +92,17 @@ export default function HomePage() {
 
           {/* CTAs */}
           <div className="hero__ctas animate-fade-in-up" style={{ animationDelay: '320ms' }}>
-            <Link to="/login" className="btn btn-primary btn-lg">
-              <LogIn size={18} />
-              Login Peserta
-            </Link>
+            {!user ? (
+              <Link to="/login" className="btn btn-primary btn-lg">
+                <LogIn size={18} />
+                Login Peserta
+              </Link>
+            ) : (
+              <Link to={getDashboardLink()} className="btn btn-primary btn-lg">
+                <LogIn size={18} />
+                Ke Dashboard {user.role === 'peserta' ? 'Peserta' : user.role === 'juri' ? 'Juri' : 'Admin'}
+              </Link>
+            )}
             <Link to="/ranking" className="btn btn-outline btn-lg">
               <Trophy size={18} />
               Lihat Ranking
