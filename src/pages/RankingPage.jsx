@@ -298,28 +298,37 @@ export default function RankingPage() {
 
           {filtered.length === 0 ? (
             <div className="ranking-empty">
-              <Trophy size={48} style={{ color: 'var(--text-muted)' }} />
-              <p>Belum ada nilai yang dapat ditampilkan</p>
+              <Trophy size={52} style={{ color: 'var(--border-default)', filter: 'drop-shadow(0 0 12px rgba(16,185,129,0.2))' }} />
+              <p style={{ fontWeight: 600, fontSize: '1.0625rem' }}>Belum Ada Nilai Tersedia</p>
+              <p style={{ fontSize: '0.875rem', maxWidth: 320, textAlign: 'center', lineHeight: 1.6 }}>
+                Nilai akan muncul setelah admin mempublikasikan hasil penilaian.
+              </p>
             </div>
           ) : (
             <>
               {/* Podium top 3 */}
               {top3.length >= 1 && (
                 <div className="podium-section">
-                  <div className="podium-wrap">
-                    {top3[1] && <PodiumCard rank={2} participant={top3[1].participant} finalScore={top3[1].finalScore} />}
-                    {top3[0] && <PodiumCard rank={1} participant={top3[0].participant} finalScore={top3[0].finalScore} />}
-                    {top3[2] && <PodiumCard rank={3} participant={top3[2].participant} finalScore={top3[2].finalScore} />}
+                  <div className="podium-arena">
+                    <div className="podium-arena-title">🏆 Podium Kejuaraan</div>
+                    <div className="podium-wrap">
+                      {top3[1] && <PodiumCard rank={2} participant={top3[1].participant} finalScore={top3[1].finalScore} />}
+                      {top3[0] && <PodiumCard rank={1} participant={top3[0].participant} finalScore={top3[0].finalScore} />}
+                      {top3[2] && <PodiumCard rank={3} participant={top3[2].participant} finalScore={top3[2].finalScore} />}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Tabel ranking lengkap */}
-              <div className="ranking-table-wrap glass-card">
+              <div className="ranking-table-wrap">
                 <div className="ranking-table-header">
-                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>
-                    <Star size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--gold-400)' }} />
-                    Ranking Lengkap ({filtered.length} peserta)
+                  <div style={{ fontWeight: 700, fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Star size={16} style={{ color: 'var(--gold-400)' }} />
+                    Ranking Lengkap
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    {filtered.length} peserta
                   </div>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
