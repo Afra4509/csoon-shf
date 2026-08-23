@@ -81,6 +81,9 @@
   background: rgba(0,0,0,0.5);
   z-index: 199;
 }
+@media (min-width: 901px) {
+  .juri-overlay { display: none !important; }
+}
 
 /* ── Main ── */
 .juri-main {
@@ -103,8 +106,7 @@
   gap: 12px;
   backdrop-filter: blur(12px);
 }
-
-.juri-menu-btn { display: none; }
+.juri-menu-btn { display: none !important; }
 
 .juri-content {
   flex: 1;
