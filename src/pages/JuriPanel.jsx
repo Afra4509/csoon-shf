@@ -83,7 +83,7 @@ function DashboardJuriTab({ user, participants, allScores }) {
 
       {/* Bidang badge */}
       {bidang && (
-        <div className="glass-card juri-bidang-badge" style={{ borderLeft: `3px solid ${bidangCfg.color}` }}>
+        <div className="juri-card juri-bidang-badge" style={{ borderLeft: `3px solid ${bidangCfg.color}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: bidangCfg.color, flexShrink: 0 }} />
             <div>
@@ -97,7 +97,7 @@ function DashboardJuriTab({ user, participants, allScores }) {
       )}
 
       {/* Progress card */}
-      <div className="glass-card juri-progress-card">
+      <div className="juri-card juri-progress-card">
         <div className="juri-progress-header">
           <div>
             <div className="juri-progress-title">Progress Penilaian Anda</div>
@@ -131,15 +131,15 @@ function DashboardJuriTab({ user, participants, allScores }) {
 
       {/* Stats */}
       <div className="juri-stats-row">
-        <div className="glass-card juri-stat">
+        <div className="juri-card juri-stat">
           <div className="juri-stat-value" style={{ color: 'var(--emerald-400)' }}>{participants.length}</div>
           <div className="juri-stat-label">Total Peserta</div>
         </div>
-        <div className="glass-card juri-stat">
+        <div className="juri-card juri-stat">
           <div className="juri-stat-value" style={{ color: bidangCfg.color || 'var(--gold-400)' }}>{scoredIds.size}</div>
           <div className="juri-stat-label">Sudah Dinilai</div>
         </div>
-        <div className="glass-card juri-stat">
+        <div className="juri-card juri-stat">
           <div className="juri-stat-value" style={{ color: 'var(--red-400)' }}>{notDone.length}</div>
           <div className="juri-stat-label">Belum Dinilai</div>
         </div>
@@ -147,7 +147,7 @@ function DashboardJuriTab({ user, participants, allScores }) {
 
       {/* Belum dinilai */}
       {notDone.length > 0 && (
-        <div className="glass-card" style={{ overflow: 'hidden' }}>
+        <div className="juri-card" style={{ overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <AlertCircle size={16} style={{ color: 'var(--gold-400)' }} />
             <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>Peserta Belum Dinilai</span>
@@ -299,7 +299,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
   if (!bidang) {
     return (
       <div className="juri-tab">
-        <div className="glass-card" style={{ padding: 40, textAlign: 'center' }}>
+        <div className="juri-card" style={{ padding: 40, textAlign: 'center' }}>
           <AlertCircle size={40} style={{ color: 'var(--gold-400)', margin: '0 auto 16px' }} />
           <h3 className="text-title">Bidang Belum Ditetapkan</h3>
           <p style={{ color: 'var(--text-muted)', marginTop: 8 }}>
@@ -318,7 +318,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 
       <div className="juri-input-layout">
         {/* Daftar peserta */}
-        <div className="juri-picker glass-card">
+        <div className="juri-picker juri-card">
           <div className="juri-picker-search">
             <div className="input-with-icon">
               <Search size={14} className="input-icon" />
@@ -341,10 +341,10 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                   className={`juri-picker-item ${selected === p.id ? 'juri-picker-item--active' : ''}`}
                   onClick={() => setSelected(p.id)}
                 >
-                  <div>
+                  <div className="juri-picker-item-info">
                     <div className="juri-picker-item-name">{p.group_name}</div>
                     <div className="juri-picker-item-meta">
-                      #{p.no_urut}
+                      <span className="juri-picker-item-no">#{p.no_urut}</span>
                       <span className={`badge badge-xs ${p.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>{p.kategori.toUpperCase()}</span>
                     </div>
                   </div>
@@ -367,7 +367,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
           {peserta ? (
             <>
               {/* Header peserta */}
-              <div className="form-penilaian-header glass-card">
+              <div className="form-penilaian-header juri-card">
                 <div className="form-penilaian-meta">
                   <div className="form-penilaian-label">FORM PENILAIAN</div>
                   <div className="form-penilaian-info">
@@ -385,7 +385,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 
               <form onSubmit={handleSave}>
                 {/* Tabel penilaian — sesuai form resmi */}
-                <div className="tabel-penilaian-wrap glass-card">
+                <div className="tabel-penilaian-wrap juri-card">
                   <table className="tabel-penilaian">
                     <thead>
                       <tr>
@@ -449,7 +449,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                 </div>
 
                 {/* Catatan Dewan Juri */}
-                <div className="glass-card catatan-wrap">
+                <div className="juri-card catatan-wrap">
                   <label className="catatan-label">Catatan Dewan Juri:</label>
                   <textarea
                     className="input-field catatan-input"
@@ -481,7 +481,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
               </form>
             </>
           ) : (
-            <div className="juri-form-empty glass-card">
+            <div className="juri-form-empty juri-card">
               <Edit3 size={40} style={{ color: 'var(--text-muted)' }} />
               <p>Pilih peserta dari daftar untuk mulai menilai</p>
             </div>
@@ -508,7 +508,7 @@ function RiwayatTab({ user, participants, allScores, allNotes, scoringCriteria }
         <span className="badge badge-green">{scoredParticipantIds.length} peserta dinilai</span>
       </div>
 
-      <div className="glass-card" style={{ overflow: 'hidden' }}>
+      <div className="juri-card" style={{ overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
             <thead>

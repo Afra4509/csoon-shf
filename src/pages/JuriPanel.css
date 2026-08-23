@@ -156,6 +156,17 @@
 }
 
 /* ════════════════════════════════════════════════
+   JURI CARDS (Solid Dashboard Feel)
+════════════════════════════════════════════════ */
+.juri-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+/* ════════════════════════════════════════════════
    TAB WRAPPER
 ════════════════════════════════════════════════ */
 .juri-tab {
@@ -330,12 +341,19 @@
   padding-left: 18px;
 }
 
+.juri-picker-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
 .juri-picker-item-name {
   font-weight: 700;
   font-size: 0.9375rem;
   color: var(--text-primary);
   line-height: 1.35;
-  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -346,7 +364,12 @@
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.juri-picker-item-no {
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 /* ════════════════════════════════════════════════
