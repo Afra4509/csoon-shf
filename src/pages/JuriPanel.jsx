@@ -341,15 +341,16 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                   className={`juri-picker-item ${selected === p.id ? 'juri-picker-item--active' : ''}`}
                   onClick={() => setSelected(p.id)}
                 >
-                  <div className="juri-picker-item-info">
+                  <div>
                     <div className="juri-picker-item-name">{p.group_name}</div>
                     <div className="juri-picker-item-meta">
-                      #{p.no_urut} · <span className={`badge badge-xs ${p.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>{p.kategori.toUpperCase()}</span>
+                      #{p.no_urut}
+                      <span className={`badge badge-xs ${p.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>{p.kategori.toUpperCase()}</span>
                     </div>
                   </div>
                   {isDone
-                    ? <CheckCircle size={15} style={{ color: 'var(--emerald-400)', flexShrink: 0 }} />
-                    : <Clock size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
+                    ? <CheckCircle size={16} style={{ color: 'var(--emerald-400)', flexShrink: 0 }} />
+                    : <Clock size={16} style={{ color: 'var(--text-muted)', flexShrink: 0, opacity: 0.5 }} />}
                 </button>
               );
             })}
