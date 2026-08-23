@@ -374,6 +374,8 @@
   gap: 12px;
   transition: background 0.15s;
   text-align: left;
+  color: var(--text-primary);
+  font-family: inherit;
 }
 .nilai-row-header:hover { background: var(--bg-elevated); }
 .nilai-row-body {
