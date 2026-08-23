@@ -597,11 +597,12 @@ export default function JuriPanel() {
   } = useScoreStore();
 
   useEffect(() => {
+    if (!user?.id) return;
     fetchAllParticipants();
     fetchAllScores();
     fetchAllNotes();
     fetchScoringMaster();
-  }, []);
+  }, [user?.id]);
 
   const bidang    = user?.bidang;
   const bidangCfg = BIDANG_CONFIG[bidang] || {};

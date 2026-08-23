@@ -20,10 +20,14 @@ function ProtectedPeserta({ children }) {
   const [checkingRef, setCheckingRef] = useState(!!ref && !user);
 
   useEffect(() => {
-    if (ref && !user) {
+    if (ref && !user && !loading) {
+      setCheckingRef(true);
       loginByRef(ref).finally(() => setCheckingRef(false));
+    } else if (!ref || user) {
+      setCheckingRef(false);
     }
-  }, [ref, user, loginByRef]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref, loading]);
 
   if (loading || checkingRef) return <FullScreenLoader />;
   if (!user || user.role !== 'peserta') return <Navigate to="/login" replace />;
@@ -73,6 +77,7 @@ function ThemeProvider({ children }) {
 
 export default function App() {
   const init = useAuthStore(s => s.init);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { init(); }, []);
 
   return (

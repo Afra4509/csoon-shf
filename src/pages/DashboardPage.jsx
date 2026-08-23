@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LogOut, RefreshCw, Clock, CheckCircle,
@@ -145,7 +145,7 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [initialLoad,  setInitialLoad]  = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user?.id) return;
     const { scores, notes } = await fetchMyScores(user.id);
     setMyScores(scores || []);
@@ -154,13 +154,14 @@ export default function DashboardPage() {
     const { data: s } = await supabase.from('event_settings').select('show_judge_notes').eq('id', 1).single();
     if (s) setSettings(s);
     setInitialLoad(false);
-  };
+  }, [user?.id, fetchMyScores]);
 
   useEffect(() => {
     loadData();
     fetchScoringMaster();
 
     // Realtime
+    if (!user?.id) return;
     const channel = supabase
       .channel(`myscore-${user?.id}`)
       .on('postgres_changes', {
@@ -174,7 +175,7 @@ export default function DashboardPage() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [user?.id]);
+  }, [loadData, fetchScoringMaster]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

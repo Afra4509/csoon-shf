@@ -11,7 +11,7 @@ export default function Navbar() {
     () => localStorage.getItem('shf_theme') || 'dark'
   );
 
-  const { user, isAdmin, logout } = useAuthStore();
+  const { user, isAdmin, isJuri, logout } = useAuthStore();
   const location = useLocation();
   const isHome = location.pathname === '/';
 
@@ -82,6 +82,11 @@ export default function Navbar() {
                 <Link to="/admin" className="btn btn-outline btn-sm">
                   <Shield size={15} />
                   Admin Panel
+                </Link>
+              ) : isJuri ? (
+                <Link to="/juri" className="btn btn-outline btn-sm">
+                  <Shield size={15} />
+                  Panel Juri
                 </Link>
               ) : (
                 <Link to="/dashboard" className="btn btn-outline btn-sm">

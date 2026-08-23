@@ -336,6 +336,14 @@ export const useScoreStore = create((set, get) => ({
   // ── Export CSV ────────────────────────────────────────────
   exportCSV: () => {
     const { participants, finalScores } = get();
+    // Escape CSV values (wrap in quotes if contains comma, quote, or newline)
+    const esc = (v) => {
+      const s = v == null ? '' : String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    };
+
     const rows = [
       ['No Urut', 'Nama Grup', 'Sekolah', 'Kategori', 'Status', 'Adab (30)', 'Vokal (40)', 'Banjari (30)', 'Nilai Utama (100)', 'Jingle', 'Selesai'],
     ];
@@ -354,6 +362,6 @@ export const useScoreStore = create((set, get) => ({
       ]);
     });
 
-    return rows.map(r => r.join(',')).join('\n');
+    return rows.map(r => r.map(esc).join(',')).join('\n');
   },
 }));
