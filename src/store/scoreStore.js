@@ -238,7 +238,43 @@ export const useScoreStore = create((set, get) => ({
     };
   },
 
+  // ── Admin: reset semua nilai satu peserta (atau per bidang) ─
+  // fieldId: null = reset semua bidang, string = reset bidang tertentu saja
+  resetParticipantScores: async (participantId, fieldId = null) => {
+    try {
+      // Delete scores
+      let scoresQ = supabaseAdmin.from('scores').delete().eq('participant_id', participantId);
+      if (fieldId) scoresQ = scoresQ.eq('field_id', fieldId);
+      const { error: e1 } = await scoresQ;
+      if (e1) return { success: false, error: e1.message };
+
+      // Delete judge_notes
+      let notesQ = supabaseAdmin.from('judge_notes').delete().eq('participant_id', participantId);
+      if (fieldId) notesQ = notesQ.eq('field_id', fieldId);
+      const { error: e2 } = await notesQ;
+      if (e2) return { success: false, error: e2.message };
+
+      // Full reset: juga hapus final_scores
+      if (!fieldId) {
+        const { error: e3 } = await supabaseAdmin
+          .from('final_scores').delete().eq('participant_id', participantId);
+        if (e3) return { success: false, error: e3.message };
+      }
+
+      await Promise.all([
+        get().fetchAllScores(),
+        get().fetchAllNotes(),
+        get().fetchFinalScores(),
+      ]);
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  },
+
   // ── Stats dashboard ───────────────────────────────────────
+
   getStats: () => {
     const { participants, finalScores } = get();
     const done = finalScores.filter(f => f.is_complete).length;

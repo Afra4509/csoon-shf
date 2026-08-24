@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Edit3, Download, LogOut, Search,
   CheckCircle, Clock, Zap, BarChart2, Save, X, AlertCircle,
   Menu, Plus, ShieldCheck, Trophy, Lock, Unlock, Eye, EyeOff,
-  RefreshCw, Key, UserPlus, Upload, ChevronDown, ChevronUp, Star
+  RefreshCw, Key, UserPlus, Upload, ChevronDown, ChevronUp, Star, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
@@ -454,9 +454,28 @@ function JuriTab({ judges, createJudge, updateJudge, deleteJudge, resetJudgePass
 }
 
 /* ── Rekap Nilai Tab ── */
-function NilaiTab({ participants, allScores, allNotes, finalScores }) {
-  const [filterKat, setFilterKat] = useState('all');
-  const [expandId,  setExpandId]  = useState(null);
+function NilaiTab({ participants, allScores, allNotes, finalScores, resetParticipantScores }) {
+  const [filterKat,   setFilterKat]   = useState('all');
+  const [expandId,    setExpandId]    = useState(null);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetField,  setResetField]  = useState('all');
+
+  const openReset = (p, e) => { e.stopPropagation(); setResetField('all'); setResetTarget(p); };
+
+  const handleReset = async () => {
+    if (!resetTarget) return;
+    setIsResetting(true);
+    const res = await resetParticipantScores(resetTarget.id, resetField === 'all' ? null : resetField);
+    setIsResetting(false);
+    if (res.success) {
+      const lbl = resetField === 'all' ? 'semua bidang' : (BIDANG_LIST.find(b => b.id === resetField)?.label || resetField);
+      toast.success(`✅ Nilai ${resetTarget.group_name} (${lbl}) berhasil direset`);
+      setResetTarget(null);
+    } else {
+      toast.error(res.error || 'Gagal mereset nilai');
+    }
+  };
 
   const filtered = participants.filter(p => filterKat === 'all' || p.kategori === filterKat);
 
@@ -487,11 +506,21 @@ function NilaiTab({ participants, allScores, allNotes, finalScores }) {
                 </div>
                 <span className={`badge ${p.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>{p.kategori.toUpperCase()}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div className="badge" style={{ background: `${stat.color}15`, color: stat.color }}>{stat.label}</div>
                 <div style={{ fontSize: '1.25rem', fontWeight: 800, color: fs.is_complete ? 'var(--emerald-400)' : 'var(--text-muted)' }}>
                   {fs.is_complete ? formatScore(fs.nilai_utama) : '—'}
                 </div>
+                {allScores.some(s => s.participant_id === p.id) && (
+                  <button
+                    className="btn btn-ghost btn-icon btn-sm"
+                    title="Reset penilaian peserta ini"
+                    onClick={(e) => openReset(p, e)}
+                    style={{ color: 'var(--red-400)', flexShrink: 0 }}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
                 {isExpanded ? <ChevronUp size={18} className="text-muted"/> : <ChevronDown size={18} className="text-muted"/>}
               </div>
             </button>
@@ -537,6 +566,60 @@ function NilaiTab({ participants, allScores, allNotes, finalScores }) {
           </div>
         );
       })}
+
+      {/* ── Modal Reset ── */}
+      {resetTarget && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-scale-in" style={{ maxWidth: 460 }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Trash2 size={20} style={{ color: 'var(--red-400)' }} />
+                <h3 className="text-title" style={{ fontSize: '1.125rem' }}>Reset Penilaian</h3>
+              </div>
+              <button className="btn-icon" onClick={() => setResetTarget(null)}><X size={20}/></button>
+            </div>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Info peserta */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '12px 16px', borderLeft: '3px solid var(--red-400)' }}>
+                <div style={{ fontWeight: 700 }}>{resetTarget.group_name}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>#{resetTarget.no_urut} · {resetTarget.school_name || '—'} · {resetTarget.kategori?.toUpperCase()}</div>
+              </div>
+              {/* Pilih bidang */}
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 10 }}>Pilih bidang yang akan direset:</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[{ id: 'all', label: 'Semua Bidang', sub: 'Hapus seluruh nilai, catatan, dan final score', color: '#ef4444' }, ...BIDANG_LIST.filter(b => allScores.some(s => s.participant_id === resetTarget.id && s.field_id === b.id))].map(b => (
+                    <label key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', borderRadius: 8, background: resetField === b.id ? 'rgba(239,68,68,0.08)' : 'transparent', border: resetField === b.id ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--border-subtle)', transition: 'all 0.15s' }}>
+                      <input type="radio" name="resetField" value={b.id} checked={resetField === b.id} onChange={() => setResetField(b.id)} style={{ accentColor: '#ef4444' }} />
+                      <div>
+                        <div style={{ fontWeight: 600, color: b.color || 'var(--text-primary)' }}>{b.label}</div>
+                        {b.sub && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b.sub}</div>}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Warning */}
+              <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: '0.8125rem', color: '#f87171', display: 'flex', gap: 8 }}>
+                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>Tindakan ini <strong>tidak dapat dibatalkan</strong>. Juri harus mengisi ulang nilai yang dihapus.</span>
+              </div>
+              {/* Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button className="btn btn-outline" onClick={() => setResetTarget(null)}>Batal</button>
+                <button
+                  className="btn"
+                  style={{ background: '#ef4444', color: '#fff', boxShadow: '0 4px 12px rgba(239,68,68,0.35)' }}
+                  disabled={isResetting}
+                  onClick={handleReset}
+                >
+                  {isResetting ? 'Menghapus...' : `Reset ${resetField === 'all' ? 'Semua' : (BIDANG_LIST.find(b => b.id === resetField)?.label || '')}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -686,6 +769,7 @@ export default function AdminPanel() {
     fetchAllParticipants, fetchAllScores, fetchAllNotes, fetchFinalScores,
     createParticipant, updateParticipant, deleteParticipant,
     updateParticipantStatus, exportCSV, recalculateFinalScores,
+    resetParticipantScores,
   } = useScoreStore();
 
   const { judges, fetchJudges, createJudge, updateJudge, deleteJudge, resetJudgePassword, getJudgeProgress } = useJuriStore();
@@ -769,7 +853,7 @@ export default function AdminPanel() {
           {activeTab === 'dashboard' && <DashboardTab stats={stats} participants={participants} allScores={allScores} judges={judges} juriProgress={juriProgress} finalScores={finalScores} />}
           {activeTab === 'peserta' && <PesertaTab participants={participants} updateStatus={updateParticipantStatus} createParticipant={createParticipant} updateParticipant={updateParticipant} deleteParticipant={deleteParticipant} />}
           {activeTab === 'juri' && <JuriTab judges={judges} createJudge={createJudge} updateJudge={updateJudge} deleteJudge={deleteJudge} resetJudgePassword={resetJudgePassword} />}
-          {activeTab === 'nilai' && <NilaiTab participants={participants} allScores={allScores} allNotes={allNotes} finalScores={finalScores} />}
+          {activeTab === 'nilai' && <NilaiTab participants={participants} allScores={allScores} allNotes={allNotes} finalScores={finalScores} resetParticipantScores={resetParticipantScores} />}
           {activeTab === 'ranking' && <RankingTab participants={participants} finalScores={finalScores} settings={settings} finalizeScoring={finalizeScoring} undoFinalize={undoFinalize} publishRanking={publishRanking} unpublishRanking={unpublishRanking} recalcFinalScores={recalculateFinalScores} />}
           {activeTab === 'export' && <ExportTab exportCSV={exportCSV} />}
         </div>
