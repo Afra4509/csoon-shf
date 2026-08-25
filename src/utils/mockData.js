@@ -1,54 +1,29 @@
 // Static data for UI presentation
 
-
 export const GALLERY_IMAGES = [
   {
     id: 1,
-    url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=600&fit=crop',
-    caption: 'Penampilan Grand Final SHF 2025',
-    year: '2025',
+    url: '/shf 2024 (1).jpeg',
+    caption: 'Penampilan Peserta SHF 2024',
+    year: '2024',
   },
   {
     id: 2,
-    url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop',
-    caption: 'Momen Penampilan Terbaik',
-    year: '2025',
+    url: '/shf 2024 (2).jpeg',
+    caption: 'Momen Terbaik Festival SHF 2024',
+    year: '2024',
   },
   {
     id: 3,
-    url: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=800&h=600&fit=crop',
-    caption: 'Harmoni Musik & Syair',
+    url: '/shf 2024 (3).jpeg',
+    caption: 'Suasana Acara SHF 2024',
     year: '2024',
   },
   {
     id: 4,
-    url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&h=600&fit=crop',
-    caption: 'Semangat Peserta SHF',
+    url: '/shf 2024 (4).jpeg',
+    caption: 'Keseruan Peserta SHF 2024',
     year: '2024',
-  },
-  {
-    id: 5,
-    url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&h=600&fit=crop',
-    caption: 'Perkusi Terbaik Festival',
-    year: '2024',
-  },
-  {
-    id: 6,
-    url: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=800&h=600&fit=crop',
-    caption: 'Penyerahan Piala Juara Umum',
-    year: '2023',
-  },
-  {
-    id: 7,
-    url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop',
-    caption: 'Panggung Utama SHF',
-    year: '2023',
-  },
-  {
-    id: 8,
-    url: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&h=600&fit=crop',
-    caption: 'Closing Ceremony',
-    year: '2023',
   },
 ];
 
@@ -61,4 +36,3 @@ export const MOCK_LIVE_UPDATES = [
   { id: 6, text: 'Pengumuman pemenang dijadwalkan pukul 21.30 WITA' },
   { id: 7, text: 'Peserta dimohon standby 15 menit sebelum nomor urut tampil' },
 ];
-

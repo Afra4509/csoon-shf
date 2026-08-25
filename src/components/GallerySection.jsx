@@ -60,8 +60,8 @@ export default function GallerySection() {
               Galeri Festival
             </span>
             <h2 className="text-headline" style={{ marginTop: 8 }}>
-              Momen Terbaik<br />
-              <span className="gradient-text">SHF Setiap Tahun</span>
+              Dokumentasi Acara<br />
+              <span className="gradient-text">SHF 2024</span>
             </h2>
           </div>
           <div className="gallery-header__controls">
