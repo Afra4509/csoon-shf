@@ -1,0 +1,100 @@
+/* ── Sponsor Marquee Section ─────────────────────────────── */
+.sponsor-section {
+  padding: 48px 0 40px;
+  overflow: hidden;
+  position: relative;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.sponsor-label {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+
+/* Wrapper clips the overflow and holds the fade layers */
+.sponsor-marquee-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Fade edges */
+.sponsor-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+.sponsor-fade--left {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-base) 0%, transparent 100%);
+}
+.sponsor-fade--right {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-base) 0%, transparent 100%);
+}
+
+/* The scrolling track — translateX(-50%) moves exactly one set of items */
+.sponsor-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  width: max-content;
+  animation: sponsor-scroll 28s linear infinite;
+  will-change: transform;
+}
+
+.sponsor-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes sponsor-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Individual sponsor card */
+.sponsor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  cursor: default;
+  flex-shrink: 0;
+  width: 130px;
+}
+
+.sponsor-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transform: translateY(-4px);
+}
+
+.sponsor-card img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+  user-select: none;
+}
+
+.sponsor-name {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-align: center;
+}

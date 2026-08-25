@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import ParticleBackground from '../components/ParticleBackground';
 import LiveTicker from '../components/LiveTicker';
 import GallerySection from '../components/GallerySection';
+import SponsorMarquee from '../components/SponsorMarquee';
 import { useAuthStore } from '../store/authStore';
 import './HomePage.css';
 
@@ -219,6 +220,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Sponsor Marquee ── */}
+      <SponsorMarquee />
 
       {/* ── Footer ── */}
       <footer className="footer">
