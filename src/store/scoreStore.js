@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase, supabaseAdmin } from '../supabase';
-import { calcSubtotalKriteria, calcBidangTotal, calcNilaiUtama, compareRanking } from '../utils/scoreCalc';
+import { calcSubtotalKriteria, calcBidangTotal, calcNilaiUtama, compareRanking, BIDANG_CRITERIA_MAX } from '../utils/scoreCalc';
 
 // ── Score Store v3 — SHF Official Scoring System ──────────
 export const useScoreStore = create((set, get) => ({
@@ -60,13 +60,14 @@ export const useScoreStore = create((set, get) => ({
 
   // ── Juri: save scores for one bidang for one participant ──
   // criteriaScores: { [criteriaId]: { jali, khafi } }
-  // catatan: string
-  // pengurangan: number
-  saveFieldScores: async (participantId, judgeId, fieldId, criteriaScores, catatan, pengurangan) => {
+  // Sistem BARU: subtotal = maksiKriteria - JALI - KHAFI  (min 0)
+  saveFieldScores: async (participantId, judgeId, fieldId, criteriaScores, catatan, _penguranganLegacy) => {
+    const maks = BIDANG_CRITERIA_MAX[fieldId] ?? 10;
     const rows = Object.entries(criteriaScores).map(([criteriaId, vals]) => {
-      const jali   = parseFloat(vals.jali)  || 0;
-      const khafi  = parseFloat(vals.khafi) || 0;
-      const subtot = calcSubtotalKriteria(jali, khafi);
+      const jali  = parseFloat(vals.jali)  || 0;
+      const khafi = parseFloat(vals.khafi) || 0;
+      // Rumus baru: maks - jali - khafi, minimum 0
+      const subtot = parseFloat(Math.max(0, maks - jali - khafi).toFixed(2));
       return {
         participant_id: participantId,
         judge_id:       judgeId,
@@ -85,7 +86,7 @@ export const useScoreStore = create((set, get) => ({
 
     if (scoreErr) return { success: false, error: scoreErr.message };
 
-    // Upsert catatan & pengurangan
+    // Upsert catatan (pengurangan per bidang sudah tidak dipakai, tapi tetap simpan 0 untuk kompatibilitas)
     const { error: noteErr } = await supabaseAdmin
       .from('judge_notes')
       .upsert({
@@ -93,7 +94,7 @@ export const useScoreStore = create((set, get) => ({
         judge_id:       judgeId,
         field_id:       fieldId,
         catatan:        catatan || null,
-        pengurangan:    parseFloat(pengurangan) || 0,
+        pengurangan:    0, // pengurangan di-handle per kriteria (maks - jali - khafi)
         updated_at:     new Date().toISOString(),
       }, { onConflict: 'participant_id,judge_id,field_id' });
 
@@ -113,20 +114,17 @@ export const useScoreStore = create((set, get) => ({
 
     const upserts = participants.map(p => {
       // Nilai per bidang
-      const calc = (fieldId) => {
+      const calc = (fId) => {
         const fieldScores = allScores.filter(
-          s => s.participant_id === p.id && s.field_id === fieldId
+          s => s.participant_id === p.id && s.field_id === fId
         );
-        const note = allNotes.find(
-          n => n.participant_id === p.id && n.field_id === fieldId
-        );
-        const pengurangan = note?.pengurangan || 0;
-        const result = calcBidangTotal(fieldScores, pengurangan);
+        // Recalculate menggunakan rumus baru (maks - jali - khafi) per fieldId
+        const result = calcBidangTotal(fieldScores, 0, fId);
         return {
-          raw:   result.raw,
-          total: result.total,
-          deduct: pengurangan,
-          done:  fieldScores.length > 0,
+          raw:    result.raw,
+          total:  result.total,
+          deduct: 0,
+          done:   fieldScores.length > 0,
         };
       };
 

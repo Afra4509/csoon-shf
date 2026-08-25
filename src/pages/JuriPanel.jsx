@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useScoreStore } from '../store/scoreStore';
-import { calcSubtotalKriteria, calcBidangTotal, formatScore } from '../utils/scoreCalc';
+import { calcSubtotalByField, BIDANG_CRITERIA_MAX, calcBidangTotal, formatScore } from '../utils/scoreCalc';
 import './JuriPanel.css';
 
 /* ── Konfigurasi bidang ─────────────────────────────────── */
@@ -19,36 +19,46 @@ const BIDANG_CONFIG = {
   jingle:  { label: 'Jingle',             maxScore: 30, color: '#f472b6',             desc: 'Juri: (dalam konfirmasi)' },
 };
 
-/* ── Komponen: baris kriteria dalam tabel ───────────────── */
-function KriteriaRow({ no, label, jali, khafi, onChange }) {
-  const subtotal = calcSubtotalKriteria(jali, khafi);
-  const hasVal   = jali !== '' || khafi !== '';
+/* ── Komponen: baris kriteria dalam tabel (sistem PENGURANGAN) ── */
+function KriteriaRow({ no, label, jali, khafi, onChange, maxKriteria = 10 }) {
+  const j   = parseFloat(jali)  || 0;
+  const k   = parseFloat(khafi) || 0;
+  const sub = parseFloat(Math.max(0, maxKriteria - j - k).toFixed(2));
+  const hasVal = jali !== '' || khafi !== '';
+  const isFull = hasVal && sub === maxKriteria;
+  const isZero = hasVal && sub === 0;
 
   return (
     <tr className={`kriteria-row ${hasVal ? 'kriteria-row--filled' : ''}`}>
       <td className="td-no">{no}</td>
       <td className="td-label">{label}</td>
+      <td className="td-maks" style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600 }}>
+        {maxKriteria}
+      </td>
       <td className="td-score">
         <input
-          type="number" min={0} max={100} step={0.5}
-          className="score-input"
-          placeholder="—"
+          type="number" min={0} max={maxKriteria} step={0.5}
+          className={`score-input ${jali !== '' && parseFloat(jali) > 0 ? 'score-input--deduct' : ''}`}
+          placeholder="0"
           value={jali}
           onChange={e => onChange('jali', e.target.value)}
         />
       </td>
       <td className="td-score">
         <input
-          type="number" min={0} max={100} step={0.5}
-          className="score-input"
-          placeholder="—"
+          type="number" min={0} max={maxKriteria} step={0.5}
+          className={`score-input ${khafi !== '' && parseFloat(khafi) > 0 ? 'score-input--deduct' : ''}`}
+          placeholder="0"
           value={khafi}
           onChange={e => onChange('khafi', e.target.value)}
         />
       </td>
       <td className="td-subtotal">
-        <span className={hasVal ? 'subtotal-value' : 'subtotal-empty'}>
-          {hasVal ? subtotal.toFixed(2) : '—'}
+        <span
+          className={hasVal ? (isZero ? 'subtotal-zero' : isFull ? 'subtotal-full' : 'subtotal-value') : 'subtotal-empty'}
+          title={hasVal ? `${maxKriteria} - ${j} - ${k} = ${sub}` : undefined}
+        >
+          {hasVal ? sub.toFixed(2) : '—'}
         </span>
       </td>
     </tr>
@@ -241,17 +251,21 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
     );
   }, [participants, search]);
 
-  // Live preview total bidang
+  // Nilai maksimal per kriteria untuk bidang ini
+  const maxKriteria = BIDANG_CRITERIA_MAX[bidang] ?? 10;
+
+  // Live preview total bidang (sistem PENGURANGAN: maks - jali - khafi)
   const preview = useMemo(() => {
     const subs = criteria.map(c => {
       const v = form.scores[c.id] || {};
-      return calcSubtotalKriteria(v.jali, v.khafi);
+      const j = parseFloat(v.jali)  || 0;
+      const k = parseFloat(v.khafi) || 0;
+      return Math.max(0, parseFloat((maxKriteria - j - k).toFixed(2)));
     });
-    const raw    = subs.reduce((a, b) => a + b, 0);
-    const deduct = parseFloat(form.pengurangan) || 0;
-    const total  = Math.max(0, raw - deduct);
-    return { raw: parseFloat(raw.toFixed(2)), deduct, total: parseFloat(total.toFixed(2)) };
-  }, [form, criteria]);
+    const raw   = parseFloat(subs.reduce((a, b) => a + b, 0).toFixed(2));
+    const total = raw; // tidak ada pengurangan tambahan di level bidang, sudah per kriteria
+    return { raw, total, maxBidang: bidangCfg.maxScore };
+  }, [form, criteria, maxKriteria, bidangCfg.maxScore]);
 
   const setScore = (criteriaId, type, val) => {
     setForm(prev => ({
@@ -267,13 +281,13 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
     e.preventDefault();
     if (!selected || !user?.id || !bidang) return;
 
-    // Validate: semua kriteria harus diisi
+    // Validate: semua kriteria harus diisi (nilai 0 valid, string kosong tidak)
     const missing = criteria.filter(c => {
       const v = form.scores[c.id] || {};
       return v.jali === '' || v.khafi === '';
     });
     if (missing.length > 0) {
-      toast.error(`Isi nilai JALI dan KHAFI untuk semua ${criteria.length} kriteria.`);
+      toast.error(`Isi kolom Pengurangan JALI dan KHAFI untuk semua ${criteria.length} kriteria. (Isi 0 jika tidak ada pengurangan)`);
       return;
     }
 
@@ -390,9 +404,10 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                     <thead>
                       <tr>
                         <th className="th-no">No.</th>
-                        <th className="th-kriteria">{bidangCfg.label.toUpperCase()} ({bidangCfg.maxScore})</th>
-                        <th className="th-jali">JALI</th>
-                        <th className="th-khafi">KHAFI</th>
+                        <th className="th-kriteria" style={{ textAlign: 'left' }}>{bidangCfg.label.toUpperCase()}</th>
+                        <th className="th-maks" title="Nilai maksimal per kriteria">Maks.</th>
+                        <th className="th-jali"><span style={{ color: '#f87171' }}>JALI</span><br/><span style={{ fontSize: '0.65rem', fontWeight: 400, color: 'var(--text-muted)', letterSpacing: 0 }}>(pengurangan)</span></th>
+                        <th className="th-khafi"><span style={{ color: '#fb923c' }}>KHAFI</span><br/><span style={{ fontSize: '0.65rem', fontWeight: 400, color: 'var(--text-muted)', letterSpacing: 0 }}>(pengurangan)</span></th>
                         <th className="th-total">SUBTOTAL</th>
                       </tr>
                     </thead>
@@ -405,6 +420,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                           jali={form.scores[c.id]?.jali ?? ''}
                           khafi={form.scores[c.id]?.khafi ?? ''}
                           onChange={(type, val) => setScore(c.id, type, val)}
+                          maxKriteria={maxKriteria}
                         />
                       ))}
                     </tbody>
@@ -412,37 +428,22 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 
                   {/* Summary bawah tabel */}
                   <div className="tabel-summary">
-                    <div className="tabel-summary-row">
-                      <span>Nilai Sebelum Pengurangan:</span>
-                      <strong style={{ color: 'var(--text-primary)' }}>{formatScore(preview.raw)}</strong>
+                    {/* Info maksimal */}
+                    <div className="tabel-summary-row" style={{ fontSize: '0.8125rem' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Nilai Maksimal Bidang</span>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{bidangCfg.maxScore} poin ({criteria.length} kriteria × {maxKriteria} poin)</span>
                     </div>
                     <div className="tabel-summary-row">
-                      <label htmlFor="pengurangan" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        Pengurangan Nilai:
-                      </label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <input
-                          id="pengurangan"
-                          type="number" min={0} step={0.5}
-                          className="score-input pengurangan-input"
-                          placeholder="0"
-                          value={form.pengurangan}
-                          onChange={e => setForm(prev => ({ ...prev, pengurangan: e.target.value }))}
-                        />
-                      </div>
+                      <span>Total Pengurangan (JALI + KHAFI)</span>
+                      <strong style={{ color: preview.maxBidang - preview.total > 0 ? '#f87171' : 'var(--text-muted)' }}>
+                        -{formatScore(preview.maxBidang - preview.total)}
+                      </strong>
                     </div>
                     <div className="tabel-summary-row tabel-summary-total">
-                      <span>TOTAL AKHIR:</span>
-                      <strong
-                        style={{
-                          color: bidangCfg.color,
-                          fontSize: '1.25rem',
-                        }}
-                      >
+                      <span>TOTAL NILAI {bidangCfg.label.toUpperCase()}:</span>
+                      <strong style={{ color: bidangCfg.color, fontSize: '1.375rem' }}>
                         {formatScore(preview.total)}
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 4 }}>
-                          / {bidangCfg.maxScore}
-                        </span>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginLeft: 6 }}>/ {bidangCfg.maxScore}</span>
                       </strong>
                     </div>
                   </div>
@@ -536,7 +537,8 @@ function RiwayatTab({ user, participants, allScores, allNotes, scoringCriteria }
                 const p       = participants.find(x => x.id === pid);
                 const pScores = myScores.filter(s => s.participant_id === pid);
                 const note    = allNotes.find(n => n.participant_id === pid && n.field_id === bidang && n.judge_id === user?.id);
-                const result  = calcBidangTotal(pScores, note?.pengurangan || 0);
+                const maks    = BIDANG_CRITERIA_MAX[bidang] ?? 10;
+                const result  = calcBidangTotal(pScores, 0, bidang);
                 const latestScore = pScores.reduce((a, b) =>
                   new Date(a.updated_at) > new Date(b.updated_at) ? a : b, pScores[0]);
 
@@ -545,21 +547,20 @@ function RiwayatTab({ user, participants, allScores, allNotes, scoringCriteria }
                     <td style={{ color: 'var(--text-muted)', fontWeight: 700 }}>#{p?.no_urut || '—'}</td>
                     <td style={{ fontWeight: 600 }}>{p?.group_name || '—'}</td>
                     {criteria.map(c => {
-                      const s = pScores.find(sc => sc.criteria_id === c.id);
-                      const sub = s ? calcSubtotalKriteria(s.nilai_jali, s.nilai_khafi) : null;
+                      const s   = pScores.find(sc => sc.criteria_id === c.id);
+                      // Hitung subtotal dengan rumus baru: maks - jali - khafi
+                      const sub = s ? parseFloat(Math.max(0, maks - (s.nilai_jali || 0) - (s.nilai_khafi || 0)).toFixed(2)) : null;
                       return (
                         <td key={c.id} style={{ textAlign: 'center' }}>
                           {sub != null ? (
-                            <span title={`JALI: ${s.nilai_jali} | KHAFI: ${s.nilai_khafi}`}>
+                            <span title={`${maks} - ${s.nilai_jali} - ${s.nilai_khafi} = ${sub}`} style={{ fontWeight: 600 }}>
                               {sub.toFixed(2)}
                             </span>
                           ) : '—'}
                         </td>
                       );
                     })}
-                    <td style={{ textAlign: 'center', color: 'var(--red-400)' }}>
-                      {note?.pengurangan > 0 ? `-${note.pengurangan}` : '—'}
-                    </td>
+                    <td style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>—</td>
                     <td style={{ fontWeight: 700, color: bidangCfg.color }}>
                       {result.isEmpty ? '—' : formatScore(result.total)}
                     </td>

@@ -464,6 +464,7 @@
 
 .th-no       { width: 52px; }
 .th-kriteria { text-align: left !important; padding-left: 24px !important; }
+.th-maks     { width: 60px; }
 .th-jali, .th-khafi { width: 100px; }
 .th-total    { width: 110px; }
 
@@ -519,6 +520,18 @@
   background: var(--bg-surface);
 }
 
+/* Deduction input — highlighted red when value > 0 */
+.score-input--deduct {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(239, 68, 68, 0.05);
+  color: #f87171;
+}
+
+.score-input--deduct:focus {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
 .score-input:hover:not(:focus) {
   border-color: var(--border-strong);
 }
@@ -531,6 +544,21 @@
   font-size: 1rem;
   color: var(--emerald-400);
 }
+
+/* Subtotal at full marks — bright green */
+.subtotal-full {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--emerald-400);
+}
+
+/* Subtotal at zero — red warning */
+.subtotal-zero {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #f87171;
+}
+
 .subtotal-empty {
   color: var(--text-muted);
   font-size: 1.125rem;
