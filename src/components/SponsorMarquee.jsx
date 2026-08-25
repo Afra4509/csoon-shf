@@ -1,32 +1,31 @@
 import './SponsorMarquee.css';
 
-// Duplikat foto sponsor agar terlihat penuh saat scroll
-const SPONSORS = [
-  { id: 1, name: 'aefera.me', img: '/sponsor.jpeg' },
-  { id: 2, name: 'aefera.me', img: '/sponsor.jpeg' },
-  { id: 3, name: 'aefera.me', img: '/sponsor.jpeg' },
-  { id: 4, name: 'aefera.me', img: '/sponsor.jpeg' },
-  { id: 5, name: 'aefera.me', img: '/sponsor.jpeg' },
-  { id: 6, name: 'aefera.me', img: '/sponsor.jpeg' },
+// Banyak item agar loop benar-benar seamless tanpa patah
+const BASE = [
+  { id: 1, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 2, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 3, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 4, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 5, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 6, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 7, img: '/sponsor.jpeg', name: 'aefera.me' },
+  { id: 8, img: '/sponsor.jpeg', name: 'aefera.me' },
 ];
 
 export default function SponsorMarquee() {
-  // Duplikat 2x untuk loop seamless
-  const track = [...SPONSORS, ...SPONSORS];
+  // Duplikat tepat 2x — animasi translateX(-50%) akan snap seamless
+  const track = [...BASE, ...BASE];
 
   return (
     <section className="sponsor-section">
       <div className="sponsor-label">Didukung Oleh</div>
       <div className="sponsor-marquee-wrapper">
-        {/* Gradient fade kiri-kanan */}
         <div className="sponsor-fade sponsor-fade--left"  />
         <div className="sponsor-fade sponsor-fade--right" />
-
         <div className="sponsor-marquee-track">
           {track.map((s, i) => (
             <div key={i} className="sponsor-card">
               <img src={s.img} alt={s.name} draggable={false} />
-              <span className="sponsor-name">{s.name}</span>
             </div>
           ))}
         </div>

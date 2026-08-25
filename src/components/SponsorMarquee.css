@@ -63,22 +63,14 @@
 /* Individual sponsor card */
 .sponsor-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 14px 20px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  justify-content: center;
+  transition: transform 0.2s;
   cursor: default;
   flex-shrink: 0;
-  width: 130px;
 }
 
 .sponsor-card:hover {
-  border-color: var(--accent-primary);
-  box-shadow: 0 4px 20px var(--accent-glow);
   transform: translateY(-4px);
 }
 
@@ -91,10 +83,3 @@
   user-select: none;
 }
 
-.sponsor-name {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  text-align: center;
-}
