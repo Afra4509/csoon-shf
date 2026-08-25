@@ -370,10 +370,10 @@ export const useScoreStore = create((set, get) => ({
   // ── Export CSV ────────────────────────────────────────────
   exportCSV: () => {
     const { participants, finalScores } = get();
-    // Escape CSV values (wrap in quotes if contains comma, quote, or newline)
+    // Escape CSV values (wrap in quotes if contains semicolon, quote, or newline)
     const esc = (v) => {
       const s = v == null ? '' : String(v);
-      return s.includes(',') || s.includes('"') || s.includes('\n')
+      return s.includes(';') || s.includes('"') || s.includes('\n')
         ? `"${s.replace(/"/g, '""')}"`
         : s;
     };
@@ -396,6 +396,6 @@ export const useScoreStore = create((set, get) => ({
       ]);
     });
 
-    return rows.map(r => r.map(esc).join(',')).join('\n');
+    return rows.map(r => r.map(esc).join(';')).join('\n');
   },
 }));
