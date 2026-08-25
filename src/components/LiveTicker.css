@@ -23,6 +23,7 @@
   color: var(--emerald-400);
   flex-shrink: 0;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .live-ticker__track-wrapper {
@@ -34,31 +35,48 @@
   align-items: center;
 }
 
+/* Fade edges */
 .live-ticker__track-wrapper::before,
 .live-ticker__track-wrapper::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 40px;
+  width: 32px;
   z-index: 2;
   pointer-events: none;
 }
 .live-ticker__track-wrapper::before {
   left: 0;
-  background: linear-gradient(to right, var(--bg-base), transparent);
+  background: linear-gradient(to right, var(--bg-glass, var(--bg-base)), transparent);
 }
 .live-ticker__track-wrapper::after {
   right: 0;
-  background: linear-gradient(to left, var(--bg-base), transparent);
+  background: linear-gradient(to left, var(--bg-glass, var(--bg-base)), transparent);
 }
 
+/* Smooth infinite scroll — no JS needed */
 .live-ticker__track {
   display: flex;
   align-items: center;
   white-space: nowrap;
-  animation: ticker-scroll 40s linear infinite;
   will-change: transform;
+}
+
+/* Multi-item: scroll continuously */
+.live-ticker__track--scroll {
+  animation: ticker-scroll var(--ticker-duration, 30s) linear infinite;
+}
+
+/* Single item: just fade in, no scroll */
+.live-ticker__track--static {
+  animation: none;
+  padding-left: 20px;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .live-ticker__item {
@@ -77,9 +95,9 @@
   border-radius: 50%;
   background: var(--accent-primary);
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 @media (max-width: 480px) {
-  .live-ticker__item { font-size: 0.75rem; padding: 0 20px; }
+  .live-ticker__item { font-size: 0.75rem; padding: 0 18px; }
 }
