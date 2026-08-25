@@ -1,16 +1,12 @@
 import './SponsorMarquee.css';
 
-// Banyak item agar loop benar-benar seamless tanpa patah
-const BASE = [
-  { id: 1, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 2, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 3, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 4, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 5, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 6, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 7, img: '/sponsor.jpeg', name: 'aefera.me' },
-  { id: 8, img: '/sponsor.jpeg', name: 'aefera.me' },
-];
+// Buat 30 item agar total lebarnya jauh melebihi layar ultrawide sekalipun,
+// sehingga saat animasi translateX(-50%) tidak ada area kosong yang terlihat.
+const BASE = Array.from({ length: 30 }, (_, i) => ({
+  id: i + 1,
+  img: '/sponsor.jpeg',
+  name: 'aefera.me'
+}));
 
 export default function SponsorMarquee() {
   // Duplikat tepat 2x — animasi translateX(-50%) akan snap seamless
