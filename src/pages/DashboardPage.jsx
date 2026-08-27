@@ -327,7 +327,7 @@ export default function DashboardPage() {
                   const jingleScores = myScores.filter(s => s.field_id === 'jingle');
                   if (jingleScores.length === 0) return null;
                   const jingleNote = myNotes.find(n => n.field_id === 'jingle');
-                  const jingleResult = calcBidangTotal(jingleScores, jingleNote?.pengurangan || 0);
+                  const jingleResult = calcBidangTotal(jingleScores, jingleNote?.pengurangan || 0, 'jingle');
                   const jingleCriteria = scoringCriteria.filter(c => c.field_id === 'jingle');
                   return (
                     <div>
@@ -351,7 +351,7 @@ export default function DashboardPage() {
                           <div className="bidang-kriteria-list">
                             {jingleCriteria.map(c => {
                               const s = jingleScores.find(sc => sc.criteria_id === c.id);
-                              const sub = s ? calcSubtotalKriteria(s.nilai_jali, s.nilai_khafi) : null;
+                              const sub = s ? calcSubtotalByField('jingle', s.nilai_jali, s.nilai_khafi) : null;
                               return (
                                 <div key={c.id} className="bidang-kriteria-row">
                                   <span className="bidang-kriteria-label">{c.label}</span>
