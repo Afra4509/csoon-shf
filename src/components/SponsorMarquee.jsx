@@ -7,7 +7,7 @@ const SPONSORS = [
   { id: 4, img: '/DASARATA (M).jpg', name: 'Dasarata' },
   { id: 5, img: '/DIES CREATIVE ADVERTISING_.jpg', name: 'Dies Creative Advertising' },
   { id: 6, img: '/HISANA FRIED CHIKEN (M).jpg', name: 'Hisana Fried Chiken' },
-  { id: 7, img: '/HK AUDIO (L).jpg', name: 'HK Audio', darkBg: true },
+  { id: 7, img: '/HK AUDIO (L).jpg', name: 'HK Audio', darkBg: true, zoom: 3 },
   { id: 8, img: '/MANISDIRASA BAKERY (L).jpg', name: 'Manisdirasa Bakery' },
   { id: 9, img: '/OMAH TUA (M).png', name: 'Omah Tua' },
   { id: 10, img: '/PERCETAKAN TRIJAYA (L).jpg', name: 'Percetakan Trijaya' },
@@ -31,8 +31,14 @@ export default function SponsorMarquee() {
         <div className="sponsor-fade sponsor-fade--right" />
         <div className="sponsor-marquee-track">
           {track.map((s, i) => (
-            <div key={i} className="sponsor-card">
-              <img src={s.img} alt={s.name} draggable={false} className={s.darkBg ? 'img-invert' : ''} />
+            <div key={i} className="sponsor-card" style={s.zoom ? { overflow: 'hidden' } : {}}>
+              <img
+                src={s.img}
+                alt={s.name}
+                draggable={false}
+                className={s.darkBg ? 'img-invert' : ''}
+                style={s.zoom ? { transform: `scale(${s.zoom})`, objectFit: 'contain' } : {}}
+              />
             </div>
           ))}
         </div>
