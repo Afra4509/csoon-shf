@@ -262,8 +262,14 @@ export const useScoreStore = create((set, get) => ({
       await Promise.all([
         get().fetchAllScores(),
         get().fetchAllNotes(),
-        get().fetchFinalScores(),
       ]);
+
+      // Jika partial reset, hitung ulang final_scores berdasarkan sisa nilai
+      if (fieldId) {
+        await get().recalculateFinalScores();
+      } else {
+        await get().fetchFinalScores();
+      }
 
       return { success: true };
     } catch (err) {
