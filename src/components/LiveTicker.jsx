@@ -55,7 +55,7 @@ export default function LiveTicker() {
         const totalScored    = finalScores?.length ?? 0;
 
         if (completedCount > 0) {
-          // Ada data — tampilkan progress
+          // Ada data — tampilkan progress (tanpa bocorkan nilai)
           const { data: parts } = await supabase
             .from('participants')
             .select('id, group_name, kategori, no_urut, status');
@@ -70,14 +70,14 @@ export default function LiveTicker() {
             msgs.push(`🎤 Sedang tampil: ${p.group_name} [${p.kategori?.toUpperCase()}] No.${p.no_urut}`);
           });
 
-          // 3 peserta terakhir selesai dinilai
+          // Tampilkan nama peserta yang terakhir selesai, TANPA nilai (belum dipublikasikan)
           const recent = (finalScores ?? [])
             .filter(f => f.is_complete)
             .slice(0, 3);
-          recent.forEach(s => {
-            const p = parts?.find(x => x.id === s.participant_id);
-            if (!p) return;
-            msgs.push(`✅ ${p.group_name} — ${formatScore(s.nilai_utama)}/100`);
+          const recentIds = recent.map(s => s.participant_id);
+          const recentParts = parts?.filter(x => recentIds.includes(x.id)) ?? [];
+          recentParts.forEach(p => {
+            msgs.push(`✅ ${p.group_name} — Selesai dinilai`);
           });
 
           setIsLive(tampil.length > 0);

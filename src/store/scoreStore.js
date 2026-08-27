@@ -202,7 +202,7 @@ export const useScoreStore = create((set, get) => ({
       return {
         scores:     fs,
         note:       n,
-        ...calcBidangTotal(fs, n?.pengurangan || 0),
+        ...calcBidangTotal(fs, n?.pengurangan || 0, fieldId),
         done:       fs.length > 0,
       };
     };

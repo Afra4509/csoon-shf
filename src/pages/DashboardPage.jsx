@@ -7,7 +7,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { useScoreStore } from '../store/scoreStore';
 import { supabase } from '../supabase';
-import { calcSubtotalKriteria, calcBidangTotal, formatScore, getScoreGrade } from '../utils/scoreCalc';
+import { calcSubtotalByField, calcBidangTotal, formatScore, getScoreGrade } from '../utils/scoreCalc';
 import QRCodeDisplay from '../components/QRCodeDisplay';
 import Navbar from '../components/Navbar';
 import './DashboardPage.css';
@@ -47,7 +47,7 @@ function ScoreRing({ value, max = 100, size = 80, color }) {
 function BidangScoreCard({ bidang, scores, notes, criteriaList, isPublished }) {
   const fieldScores = scores.filter(s => s.field_id === bidang.id);
   const note        = notes.find(n => n.field_id === bidang.id);
-  const result      = calcBidangTotal(fieldScores, note?.pengurangan || 0);
+  const result      = calcBidangTotal(fieldScores, note?.pengurangan || 0, bidang.id);
   const isDone      = fieldScores.length > 0;
   const grade       = isDone ? getScoreGrade((result.total / bidang.max) * 100) : null;
 
@@ -86,7 +86,7 @@ function BidangScoreCard({ bidang, scores, notes, criteriaList, isPublished }) {
           <div className="bidang-kriteria-list">
             {criteria.map(c => {
               const s = fieldScores.find(sc => sc.criteria_id === c.id);
-              const sub = s ? calcSubtotalKriteria(s.nilai_jali, s.nilai_khafi) : null;
+              const sub = s ? calcSubtotalByField(bidang.id, s.nilai_jali, s.nilai_khafi) : null;
               return (
                 <div key={c.id} className="bidang-kriteria-row">
                   <span className="bidang-kriteria-label">{c.label}</span>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
   const bidangResults = BIDANG.map(b => {
     const fs     = myScores.filter(s => s.field_id === b.id);
     const note   = myNotes.find(n => n.field_id === b.id);
-    const result = calcBidangTotal(fs, note?.pengurangan || 0);
+    const result = calcBidangTotal(fs, note?.pengurangan || 0, b.id);
     return { ...b, ...result, done: fs.length > 0 };
   });
 
