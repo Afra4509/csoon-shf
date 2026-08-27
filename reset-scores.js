@@ -17,12 +17,13 @@ async function main() {
   console.log('🔄 Memulai Reset Semua Nilai...');
 
   // Hapus semua data dari 3 tabel terkait nilai
-  const { error: e1 } = await supabaseAdmin.from('scores').delete().neq('id', 0);
-  const { error: e2 } = await supabaseAdmin.from('judge_notes').delete().neq('id', 0);
-  const { error: e3 } = await supabaseAdmin.from('final_scores').delete().neq('participant_id', '0');
+  const DUMMY_UUID = '00000000-0000-0000-0000-000000000000';
+  const { error: e1 } = await supabaseAdmin.from('scores').delete().neq('participant_id', DUMMY_UUID);
+  const { error: e2 } = await supabaseAdmin.from('judge_notes').delete().neq('participant_id', DUMMY_UUID);
+  const { error: e3 } = await supabaseAdmin.from('final_scores').delete().neq('participant_id', DUMMY_UUID);
 
   // Kembalikan status peserta menjadi 'menunggu'
-  const { error: e4 } = await supabaseAdmin.from('participants').update({ status: 'menunggu' }).neq('id', '0');
+  const { error: e4 } = await supabaseAdmin.from('participants').update({ status: 'menunggu' }).neq('id', DUMMY_UUID);
 
   if (e1 || e2 || e3 || e4) {
     console.error('Ada error saat reset:', e1, e2, e3, e4);

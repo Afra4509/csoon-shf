@@ -195,10 +195,11 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
   const bidangCfg  = BIDANG_CONFIG[bidang] || {};
   const criteria   = scoringCriteria.filter(c => c.field_id === bidang);
 
-  const [selected,  setSelected]  = useState(participants[0]?.id || '');
+  const [selected,  setSelected]  = useState('');
   const [search,    setSearch]    = useState('');
   const [isSaving,  setIsSaving]  = useState(false);
   const [savedAt,   setSavedAt]   = useState(null);
+  const [allDone,   setAllDone]   = useState(false);
 
   // Form state: { [criteriaId]: { jali: '', khafi: '' } }
   const emptyForm = () => {
@@ -209,9 +210,33 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 
   const [form, setForm] = useState(emptyForm());
 
-  const peserta    = participants.find(p => p.id === selected);
-  const myScores   = allScores.filter(s => s.judge_id === user?.id && s.field_id === bidang);
-  const scoredIds  = new Set(myScores.map(s => s.participant_id));
+  // Peserta yang sudah dinilai oleh juri ini di bidang ini
+  const myScores  = allScores.filter(s => s.judge_id === user?.id && s.field_id === bidang);
+  const scoredIds = new Set(myScores.map(s => s.participant_id));
+
+  // Hanya tampilkan yang BELUM dinilai di daftar kiri
+  const unscoredList = participants
+    .filter(p => !scoredIds.has(p.id))
+    .sort((a, b) => a.no_urut - b.no_urut);
+
+  const peserta = participants.find(p => p.id === selected);
+
+  // Saat mount atau setelah data berubah: pilih peserta pertama yang belum dinilai
+  useEffect(() => {
+    if (!bidang) return;
+    // Jika selected masih valid (belum dinilai), biarkan
+    if (selected && !scoredIds.has(selected)) return;
+    // Jika selected sudah dinilai atau kosong, pilih peserta berikutnya
+    const first = participants
+      .filter(p => !scoredIds.has(p.id))
+      .sort((a, b) => a.no_urut - b.no_urut)[0];
+    if (first) {
+      setSelected(first.id);
+    } else {
+      setSelected('');
+      setAllDone(true);
+    }
+  }, [allScores.length, bidang]);
 
   // Load existing scores when switching participant
   useEffect(() => {
@@ -230,7 +255,6 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
           khafi: s.nilai_khafi != null ? String(s.nilai_khafi) : '',
         };
       });
-      // Fill missing criteria with empty
       criteria.forEach(c => { if (!scores[c.id]) scores[c.id] = { jali: '', khafi: '' }; });
       setForm({
         scores,
@@ -244,12 +268,12 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return participants.filter(p =>
+    return unscoredList.filter(p =>
       p.group_name?.toLowerCase().includes(q) ||
       String(p.no_urut).includes(q) ||
       p.school_name?.toLowerCase().includes(q)
     );
-  }, [participants, search]);
+  }, [unscoredList, search]);
 
   // Nilai maksimal per kriteria untuk bidang ini
   const maxKriteria = BIDANG_CRITERIA_MAX[bidang] ?? 10;
@@ -263,7 +287,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
       return Math.max(0, parseFloat((maxKriteria - j - k).toFixed(2)));
     });
     const raw   = parseFloat(subs.reduce((a, b) => a + b, 0).toFixed(2));
-    const total = raw; // tidak ada pengurangan tambahan di level bidang, sudah per kriteria
+    const total = raw;
     return { raw, total, maxBidang: bidangCfg.maxScore };
   }, [form, criteria, maxKriteria, bidangCfg.maxScore]);
 
@@ -287,7 +311,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
       return v.jali === '' || v.khafi === '';
     });
     if (missing.length > 0) {
-      toast.error(`Isi kolom Pengurangan JALI dan KHAFI untuk semua ${criteria.length} kriteria. (Isi 0 jika tidak ada pengurangan)`);
+      toast.error(`Isi kolom JALI dan KHAFI untuk semua ${criteria.length} kriteria. (Isi 0 jika tidak ada pengurangan)`);
       return;
     }
 
@@ -305,6 +329,37 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
     if (res.success) {
       setSavedAt(new Date());
       toast.success(`✅ Nilai ${peserta?.group_name} berhasil disimpan!`);
+
+      // Auto-advance ke peserta berikutnya yang belum dinilai
+      // scoredIds belum include yang baru saja disimpan (state belum update),
+      // jadi kita tambahkan secara manual untuk mencari next
+      const currentId = selected;
+      const currentNoUrut = peserta?.no_urut ?? 0;
+
+      // Tunggu state refresh dari fetchAllScores (dipanggil di saveFieldScores)
+      // lalu pilih next unscored
+      setTimeout(() => {
+        // Setelah store refresh, scoredIds akan include currentId
+        const nextUnscored = participants
+          .filter(p => p.id !== currentId && !scoredIds.has(p.id))
+          .sort((a, b) => {
+            // Prioritaskan no_urut yang lebih besar dari peserta saat ini
+            const aAfter = a.no_urut > currentNoUrut ? 0 : 1;
+            const bAfter = b.no_urut > currentNoUrut ? 0 : 1;
+            if (aAfter !== bAfter) return aAfter - bAfter;
+            return a.no_urut - b.no_urut;
+          })[0];
+
+        if (nextUnscored) {
+          setSelected(nextUnscored.id);
+          setForm(emptyForm());
+          setSavedAt(null);
+        } else {
+          // Cek apakah memang semua sudah dinilai
+          setSelected('');
+          setAllDone(true);
+        }
+      }, 1200);
     } else {
       toast.error(res.error || 'Gagal menyimpan nilai.');
     }
@@ -324,6 +379,10 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
     );
   }
 
+  const totalPeserta  = participants.length;
+  const sudahCount    = scoredIds.size;
+  const belumCount    = totalPeserta - sudahCount;
+
   return (
     <div className="juri-tab">
       <div className="juri-tab-header">
@@ -331,8 +390,15 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
       </div>
 
       <div className="juri-input-layout">
-        {/* Daftar peserta */}
+        {/* Daftar peserta (hanya yang BELUM dinilai) */}
         <div className="juri-picker juri-card">
+          {/* Progress mini */}
+          <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', gap: 12, fontSize: '0.8rem', fontWeight: 600 }}>
+              <span style={{ color: 'var(--red-400)' }}>BELUM: {belumCount}</span>
+              <span style={{ color: 'var(--emerald-400)' }}>SUDAH: {sudahCount}</span>
+            </div>
+          </div>
           <div className="juri-picker-search">
             <div className="input-with-icon">
               <Search size={14} className="input-icon" />
@@ -347,13 +413,22 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
             </div>
           </div>
           <div className="juri-picker-list">
-            {filtered.map(p => {
-              const isDone = scoredIds.has(p.id);
-              return (
+            {filtered.length === 0 && belumCount === 0 ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+                <CheckCircle size={32} style={{ color: 'var(--emerald-400)', margin: '0 auto 10px', display: 'block' }} />
+                <div style={{ color: 'var(--emerald-400)', fontWeight: 700, fontSize: '0.9rem' }}>Semua Selesai!</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: 4 }}>Semua peserta telah dinilai</div>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                Tidak ada peserta ditemukan
+              </div>
+            ) : (
+              filtered.map(p => (
                 <button
                   key={p.id}
                   className={`juri-picker-item ${selected === p.id ? 'juri-picker-item--active' : ''}`}
-                  onClick={() => setSelected(p.id)}
+                  onClick={() => { setSelected(p.id); setSavedAt(null); }}
                 >
                   <div className="juri-picker-item-info">
                     <div className="juri-picker-item-name">{p.group_name}</div>
@@ -362,23 +437,27 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                       <span className={`badge badge-xs ${p.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>{p.kategori.toUpperCase()}</span>
                     </div>
                   </div>
-                  {isDone
-                    ? <CheckCircle size={16} style={{ color: 'var(--emerald-400)', flexShrink: 0 }} />
-                    : <Clock size={16} style={{ color: 'var(--text-muted)', flexShrink: 0, opacity: 0.5 }} />}
+                  <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                 </button>
-              );
-            })}
-            {filtered.length === 0 && (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                Tidak ada peserta
-              </div>
+              ))
             )}
           </div>
         </div>
 
         {/* Form penilaian */}
         <div className="juri-form-wrap">
-          {peserta ? (
+          {allDone || (!selected && belumCount === 0) ? (
+            <div className="juri-card" style={{ padding: 48, textAlign: 'center' }}>
+              <CheckCircle size={52} style={{ color: 'var(--emerald-400)', margin: '0 auto 16px', display: 'block' }} />
+              <h3 className="text-title" style={{ color: 'var(--emerald-400)' }}>🎉 Semua Peserta Selesai Dinilai!</h3>
+              <p style={{ color: 'var(--text-muted)', marginTop: 8 }}>
+                Anda telah menyelesaikan penilaian untuk seluruh {totalPeserta} peserta bidang {bidangCfg.label}.
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 16 }}>
+                Buka tab <strong>Riwayat</strong> untuk melihat semua nilai yang telah diinput.
+              </p>
+            </div>
+          ) : peserta ? (
             <>
               {/* Header peserta */}
               <div className="form-penilaian-header juri-card">
@@ -390,11 +469,6 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                     <span>Tingkat Pelajar: <strong>{peserta.tingkat_pelajar || peserta.kategori?.toUpperCase()}</strong></span>
                   </div>
                 </div>
-                {scoredIds.has(peserta.id) && (
-                  <div className="juri-already-badge">
-                    <CheckCircle size={14} /> Sudah dinilai — edit di sini
-                  </div>
-                )}
               </div>
 
               <form onSubmit={handleSave}>
@@ -428,7 +502,6 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 
                   {/* Summary bawah tabel */}
                   <div className="tabel-summary">
-                    {/* Info maksimal */}
                     <div className="tabel-summary-row" style={{ fontSize: '0.8125rem' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Nilai Maksimal Bidang</span>
                       <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{bidangCfg.maxScore} poin ({criteria.length} kriteria × {maxKriteria} poin)</span>
@@ -476,7 +549,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
                   >
                     {isSaving
                       ? <><span className="login-spinner" />Menyimpan...</>
-                      : <><Save size={17} />Simpan Nilai</>}
+                      : <><Save size={17} />Simpan & Lanjut</>}
                   </button>
                 </div>
               </form>
