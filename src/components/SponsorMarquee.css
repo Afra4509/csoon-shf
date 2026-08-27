@@ -89,3 +89,8 @@
   user-select: none;
 }
 
+
+/* Invert dark-background logos so they show up on the white card */
+.img-invert {
+  filter: invert(1);
+}
