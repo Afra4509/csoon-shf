@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { supabase, supabaseAdmin } from '../supabase';
 
+// ── Kunci localStorage untuk sesi non-Supabase ────────────
+// Admin backdoor dan QR-code peserta tidak membuat sesi Supabase nyata,
+// sehingga kita simpan sendiri di localStorage agar tetap ada setelah refresh.
+const LS_ADMIN = 'shf_admin_session';
+const LS_REF   = 'shf_ref_session';
+
 export const useAuthStore = create((set, get) => ({
   user:    null,
   role:    null,   // 'peserta' | 'juri' | 'admin'
@@ -9,26 +15,76 @@ export const useAuthStore = create((set, get) => ({
   loading: true,
   error:   null,
 
-  // ── Init: restore session ──────────────────────────────────
+  // ── Init: restore session on page load/refresh ─────────────
   init: async () => {
     set({ loading: true });
+
+    // 1. Coba pulihkan sesi Supabase nyata (Juri dan Peserta biasa)
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       await get()._resolveUser(session.user);
-    } else {
-      set({ loading: false });
+      _attachAuthListener();
+      return;
     }
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        await get()._resolveUser(session.user);
-      } else {
-        set({ user: null, role: null, isAdmin: false, isJuri: false, loading: false });
+    // 2. Cek sesi admin backdoor di localStorage
+    const adminRaw = localStorage.getItem(LS_ADMIN);
+    if (adminRaw) {
+      try {
+        const { email } = JSON.parse(adminRaw);
+        if (email === 'admin@shf.ac.id') {
+          set({
+            user:    { id: 'admin-hardcode-id', email, full_name: 'Administrator', role: 'admin' },
+            role:    'admin',
+            isAdmin: true,
+            isJuri:  false,
+            loading: false,
+            error:   null,
+          });
+          _attachAuthListener();
+          return;
+        }
+      } catch (_) {
+        localStorage.removeItem(LS_ADMIN);
       }
-    });
+    }
+
+    // 3. Cek sesi QR-code peserta di localStorage
+    const refRaw = localStorage.getItem(LS_REF);
+    if (refRaw) {
+      try {
+        const { participantId } = JSON.parse(refRaw);
+        const { data: participant } = await supabaseAdmin
+          .from('participants')
+          .select('*')
+          .eq('id', participantId)
+          .single();
+
+        if (participant) {
+          set({
+            user:    { ...participant, role: 'peserta' },
+            role:    'peserta',
+            isAdmin: false,
+            isJuri:  false,
+            loading: false,
+            error:   null,
+          });
+          _attachAuthListener();
+          return;
+        } else {
+          localStorage.removeItem(LS_REF);
+        }
+      } catch (_) {
+        localStorage.removeItem(LS_REF);
+      }
+    }
+
+    // Tidak ada sesi sama sekali
+    set({ loading: false });
+    _attachAuthListener();
   },
 
-  // Internal: determine role after login
+  // Internal: determine role after real Supabase login
   _resolveUser: async (authUser) => {
     // 1. Check if peserta
     const { data: participant } = await supabaseAdmin
@@ -64,12 +120,11 @@ export const useAuthStore = create((set, get) => ({
         isJuri:  true,
         loading: false,
         error:   null,
-        // bidang accessible via user.bidang
       });
       return;
     }
 
-    // 3. Fallback → admin
+    // 3. Fallback → admin (akun Supabase yang bukan peserta dan bukan juri)
     set({
       user:    { id: authUser.id, email: authUser.email, full_name: 'Administrator', role: 'admin' },
       role:    'admin',
@@ -94,7 +149,6 @@ export const useAuthStore = create((set, get) => ({
 
     await get()._resolveUser(data.user);
 
-    // Only allow peserta role through this login
     if (get().role !== 'peserta') {
       await supabase.auth.signOut();
       set({ loading: false, error: 'Akun ini bukan akun peserta.' });
@@ -103,7 +157,8 @@ export const useAuthStore = create((set, get) => ({
     return { success: true };
   },
 
-  // ── Auto Login Peserta (by QR Code ref ID) ──────────────────
+  // ── Auto Login Peserta (by QR Code ref ID) ─────────────────
+  // Sesi ini tidak berbasis Supabase, disimpan di localStorage agar tahan refresh.
   loginByRef: async (participantId) => {
     set({ loading: true, error: null });
     const { data: participant } = await supabaseAdmin
@@ -113,6 +168,8 @@ export const useAuthStore = create((set, get) => ({
       .single();
 
     if (participant) {
+      // Simpan ke localStorage agar sesi bertahan setelah refresh
+      localStorage.setItem(LS_REF, JSON.stringify({ participantId }));
       set({
         user:    { ...participant, role: 'peserta' },
         role:    'peserta',
@@ -127,7 +184,6 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: false, error: 'Peserta tidak ditemukan.' });
     return { success: false };
   },
-
 
   // ── Login Juri (by username) ───────────────────────────────
   loginJuri: async (username, password) => {
@@ -157,8 +213,9 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     const cleanEmail = email.trim().toLowerCase();
 
-    // BACKDOOR KHUSUS ADMIN (Bypass masalah koneksi/DNS lokal)
+    // BACKDOOR KHUSUS ADMIN — simpan ke localStorage agar tahan refresh
     if (cleanEmail === 'admin@shf.ac.id' && password === 'admin123') {
+      localStorage.setItem(LS_ADMIN, JSON.stringify({ email: cleanEmail }));
       set({
         user:    { id: 'admin-hardcode-id', email: cleanEmail, full_name: 'Administrator', role: 'admin' },
         role:    'admin',
@@ -193,6 +250,9 @@ export const useAuthStore = create((set, get) => ({
 
   // ── Logout ──────────────────────────────────────────────────
   logout: async () => {
+    // Hapus semua sesi non-Supabase dari localStorage
+    localStorage.removeItem(LS_ADMIN);
+    localStorage.removeItem(LS_REF);
     set({ loading: true });
     await supabase.auth.signOut();
     set({ user: null, role: null, isAdmin: false, isJuri: false, loading: false });
@@ -200,3 +260,28 @@ export const useAuthStore = create((set, get) => ({
 
   clearError: () => set({ error: null }),
 }));
+
+// ── Listener Supabase auth state change ───────────────────
+// Dipisahkan agar hanya dipasang sekali. Jika ada sesi non-Supabase
+// aktif (admin backdoor atau QR ref), jangan hapus state saat Supabase
+// mengirim event session null.
+let _listenerAttached = false;
+function _attachAuthListener() {
+  if (_listenerAttached) return;
+  _listenerAttached = true;
+
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    if (session?.user) {
+      await useAuthStore.getState()._resolveUser(session.user);
+    } else {
+      // Hanya logout jika tidak ada sesi non-Supabase aktif
+      const hasAdminSession = !!localStorage.getItem(LS_ADMIN);
+      const hasRefSession   = !!localStorage.getItem(LS_REF);
+      if (!hasAdminSession && !hasRefSession) {
+        useAuthStore.setState({
+          user: null, role: null, isAdmin: false, isJuri: false, loading: false,
+        });
+      }
+    }
+  });
+}
