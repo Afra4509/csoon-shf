@@ -143,13 +143,39 @@ export const useAuthStore = create((set, get) => ({
 
     let { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    // Fallback: jika login gagal, cari participant di DB berdasarkan username dan gunakan auth ID-nya
+    // Fallback: jika login gagal, cari participant di DB berdasarkan username atau alias
     if (error) {
-      const { data: part } = await supabaseAdmin
+      let { data: part } = await supabaseAdmin
         .from('participants')
         .select('id, username')
         .ilike('username', cleanUser)
         .maybeSingle();
+
+      if (!part) {
+        const aliasMap = {
+          'nurqolbi_sd1': 'grupnurqolbi_sd1',
+          'alfatih_sd2': 'sdntrajeng2_sd2',
+          'nurulmusthofa_sd3': 'grupnurulmustof_sd3',
+          'tabassam_sd4': 'miroudotulbanat_sd4',
+          'junioralhikmah_smp1': 'banjarismpbayta_smp1',
+          'junioralhikmah_smp15': 'banjarismpbayta_smp1',
+          'nurulmusthofa_smp2': 'smpn2gondangwet_smp2',
+          'nurulmusthofa_smp9': 'smpn2gondangwet_smp2',
+          'arroudhoh_smp5': 'mtsroudotulbana_smp5',
+          'arroudhoh_smp14': 'mtsroudotulbana_smp5',
+          'alimanputra_smp13': 'alimanputra_smp3',
+          'alimanputri_smp10': 'alimanputri_smp4',
+        };
+        const mappedTarget = aliasMap[cleanUser];
+        if (mappedTarget) {
+          const { data: pAlias } = await supabaseAdmin
+            .from('participants')
+            .select('id, username')
+            .eq('username', mappedTarget)
+            .maybeSingle();
+          part = pAlias;
+        }
+      }
 
       if (part) {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(part.id);
