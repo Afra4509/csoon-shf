@@ -23,14 +23,14 @@ const INFO_CARDS = [
   },
   {
     icon: <Users size={22} />,
-    title: 'Multi-Juri Realtime',
-    desc: 'Nilai dari seluruh juri dirata-rata otomatis. Update langsung setelah peserta turun panggung.',
+    title: 'Multi-Juri Profesional',
+    desc: 'Dewan Juri ahli mengevaluasi penampilan peserta secara objektif dengan catatan evaluasi terstruktur.',
     color: 'var(--emerald-400)',
   },
   {
     icon: <Trophy size={22} />,
-    title: 'Ranking Live',
-    desc: 'Ranking peserta dipublikasikan setelah seluruh penilaian selesai. Tampilan proyektor-ready.',
+    title: 'Evaluasi Resmi',
+    desc: 'Setiap peserta mendapatkan catatan evaluasi resmi dari Dewan Juri untuk apresiasi dan pengembangan.',
     color: 'var(--emerald-300)',
   },
 ];
@@ -91,23 +91,33 @@ export default function HomePage() {
             <LiveTicker />
           </div>
 
-          {/* CTAs */}
+            {/* CTAs */}
           <div className="hero__ctas animate-fade-in-up" style={{ animationDelay: '320ms' }}>
             {!user ? (
-              <Link to="/login" className="btn btn-primary btn-lg">
-                <LogIn size={18} />
-                Login Peserta
-              </Link>
+              <>
+                <Link to="/login" className="btn btn-primary btn-lg">
+                  <LogIn size={18} />
+                  Login Peserta
+                </Link>
+                <a href="#informasi" className="btn btn-outline btn-lg">
+                  <Star size={18} />
+                  Informasi Festival
+                </a>
+              </>
             ) : (
-              <Link to={getDashboardLink()} className="btn btn-primary btn-lg">
-                <LogIn size={18} />
-                Ke Dashboard {user.role === 'peserta' ? 'Peserta' : user.role === 'juri' ? 'Juri' : 'Admin'}
-              </Link>
+              <>
+                <Link to={getDashboardLink()} className="btn btn-primary btn-lg">
+                  <LogIn size={18} />
+                  Ke Dashboard {user.role === 'peserta' ? 'Peserta' : user.role === 'juri' ? 'Juri' : 'Admin'}
+                </Link>
+                {(user.role === 'admin' || user.role === 'juri') && (
+                  <Link to="/ranking" className="btn btn-outline btn-lg">
+                    <Trophy size={18} />
+                    Peringkat (Internal)
+                  </Link>
+                )}
+              </>
             )}
-            <Link to="/ranking" className="btn btn-outline btn-lg">
-              <Trophy size={18} />
-              Lihat Ranking
-            </Link>
           </div>
         </div>
 

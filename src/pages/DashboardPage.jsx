@@ -2,135 +2,88 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LogOut, RefreshCw, Clock, CheckCircle,
-  BookOpen, Mic, Music, Star, Award, ChevronRight, Users
+  BookOpen, Mic, Music, Star, ChevronRight, MessageSquare
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useScoreStore } from '../store/scoreStore';
 import { supabase } from '../supabase';
-import { calcSubtotalByField, calcBidangTotal, formatScore, getScoreGrade } from '../utils/scoreCalc';
+import { calcSubtotalByField, calcBidangTotal, formatScore } from '../utils/scoreCalc';
 import QRCodeDisplay from '../components/QRCodeDisplay';
 import Navbar from '../components/Navbar';
 import './DashboardPage.css';
 
 const BIDANG = [
-  { id: 'adab',    label: 'Adab dan Syair',     icon: <BookOpen size={15} />, color: 'var(--gold-400)',    max: 30 },
-  { id: 'vokal',   label: 'Bidang Suara/Vokal',  icon: <Mic size={15} />,     color: 'var(--emerald-400)', max: 40 },
-  { id: 'banjari', label: 'Musik Banjari',        icon: <Music size={15} />,   color: '#818cf8',             max: 30 },
+  { id: 'adab',    label: 'Adab dan Syair',     icon: <BookOpen size={17} />, color: 'var(--gold-400)' },
+  { id: 'vokal',   label: 'Bidang Suara/Vokal',  icon: <Mic size={17} />,     color: 'var(--emerald-400)' },
+  { id: 'banjari', label: 'Musik Banjari',        icon: <Music size={17} />,   color: '#818cf8' },
 ];
 
-/* ── Ring SVG ── */
-function ScoreRing({ value, max = 100, size = 80, color }) {
-  const pct  = Math.min((value || 0) / max, 1);
-  const r    = (size - 10) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - pct * circ;
-  return (
-    <div className="score-ring" style={{ width: size, height: size, position: 'relative', flexShrink: 0 }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border-subtle)" strokeWidth={6} />
-        <circle cx={size/2} cy={size/2} r={r} fill="none"
-          stroke={color || 'var(--accent-primary)'} strokeWidth={6}
-          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34,1.56,0.64,1)', filter: `drop-shadow(0 0 4px ${color || 'var(--accent-primary)'})` }}
-        />
-      </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-        <span style={{ fontWeight: 800, fontSize: size > 100 ? '1.5rem' : '0.9rem', color: color || 'var(--accent-primary)' }}>
-          {value != null ? formatScore(value, 1) : '—'}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ── Kartu nilai satu bidang ── */
-function BidangScoreCard({ bidang, scores, notes, criteriaList, isPublished }) {
+/* ── Kartu Evaluasi Juri per Bidang (HANYA teks evaluasi, TANPA angka) ── */
+function BidangEvaluasiCard({ bidang, scores, notes }) {
   const fieldScores = scores.filter(s => s.field_id === bidang.id);
   const note        = notes.find(n => n.field_id === bidang.id);
-  const result      = calcBidangTotal(fieldScores, note?.pengurangan || 0, bidang.id);
   const isDone      = fieldScores.length > 0;
-  const grade       = isDone ? getScoreGrade((result.total / bidang.max) * 100) : null;
-
-  // Nilai per kriteria
-  const criteria = criteriaList.filter(c => c.field_id === bidang.id);
+  const hasCatatan  = !!(note?.catatan && note.catatan.trim());
 
   return (
-    <div className={`bidang-card glass-card ${isDone ? 'bidang-card--done' : ''}`}
-      style={{ borderLeft: `3px solid ${isDone ? bidang.color : 'var(--border-subtle)'}` }}>
+    <div
+      className={`bidang-card glass-card ${isDone ? 'bidang-card--done' : ''}`}
+      style={{ borderLeft: `3px solid ${isDone ? bidang.color : 'var(--border-subtle)'}` }}
+    >
       <div className="bidang-card__header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ color: bidang.color }}>{bidang.icon}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ color: bidang.color, display: 'flex', alignItems: 'center' }}>
+            {bidang.icon}
+          </div>
           <div>
             <div className="bidang-card__label">{bidang.label}</div>
-            <div className="bidang-card__max">Maks. {bidang.max} poin</div>
+            <div className="evaluasi-card__sub">Evaluasi &amp; Catatan Dewan Juri</div>
           </div>
         </div>
         <div className="bidang-card__right">
           {isDone ? (
-            <div className="bidang-card__score" style={{ color: bidang.color }}>
-              {formatScore(result.total)}
-              <span className="bidang-card__max-label">/{bidang.max}</span>
+            <div className="evaluasi-badge-done" style={{ color: bidang.color }}>
+              <CheckCircle size={15} />
+              <span>Selesai Dievaluasi</span>
             </div>
           ) : (
             <div className="bidang-card__pending">
               <Clock size={14} />
-              <span>Menunggu</span>
+              <span>Menunggu Evaluasi</span>
             </div>
           )}
         </div>
       </div>
 
-      {isDone && (
-        <div className="bidang-card__detail">
-          {/* Detail per kriteria */}
-          <div className="bidang-kriteria-list">
-            {criteria.map(c => {
-              const s = fieldScores.find(sc => sc.criteria_id === c.id);
-              const sub = s ? calcSubtotalByField(bidang.id, s.nilai_jali, s.nilai_khafi) : null;
-              return (
-                <div key={c.id} className="bidang-kriteria-row">
-                  <span className="bidang-kriteria-label">{c.label}</span>
-                  <div className="bidang-kriteria-scores">
-                    {s ? (
-                      <>
-                        <span className="kriteria-jali">J:{formatScore(s.nilai_jali, 1)}</span>
-                        <span className="kriteria-khafi">K:{formatScore(s.nilai_khafi, 1)}</span>
-                        <span className="kriteria-sub" style={{ color: bidang.color }}>{formatScore(sub, 2)}</span>
-                      </>
-                    ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Summary */}
-          <div className="bidang-summary">
-            <div className="bidang-summary-row">
-              <span>Nilai Sebelum Pengurangan</span>
-              <span>{formatScore(result.raw)}</span>
-            </div>
-            {result.pengurangan > 0 && (
-              <div className="bidang-summary-row" style={{ color: 'var(--red-400)' }}>
-                <span>Pengurangan</span>
-                <span>−{formatScore(result.pengurangan)}</span>
+      <div className="evaluasi-card__content">
+        {isDone ? (
+          hasCatatan ? (
+            <div className="evaluasi-quote-box" style={{ borderLeftColor: bidang.color }}>
+              <div className="evaluasi-quote-header">
+                <span className="evaluasi-quote-badge" style={{ color: bidang.color, background: `${bidang.color}18`, borderColor: `${bidang.color}35` }}>
+                  <MessageSquare size={13} /> Catatan &amp; Evaluasi Dewan Juri
+                </span>
+                {note?.judges?.full_name && (
+                  <span className="evaluasi-quote-author">Juri: {note.judges.full_name}</span>
+                )}
               </div>
-            )}
-            <div className="bidang-summary-total" style={{ color: bidang.color }}>
-              <span>Total {bidang.label}</span>
-              <span>{formatScore(result.total)} / {bidang.max}</span>
+              <div className="evaluasi-quote-body">
+                &ldquo;{note.catatan}&rdquo;
+              </div>
             </div>
+          ) : (
+            <div className="evaluasi-empty-note">
+              <CheckCircle size={16} style={{ color: bidang.color, flexShrink: 0 }} />
+              <span>Dewan juri telah menyelesaikan penilaian untuk bidang ini (tidak ada catatan evaluasi tertulis khusus).</span>
+            </div>
+          )
+        ) : (
+          <div className="evaluasi-pending-box">
+            <Clock size={15} style={{ flexShrink: 0 }} />
+            <span>Penilaian sedang berlangsung. Teks evaluasi dari juri akan otomatis tampil segera setelah dinilai.</span>
           </div>
-
-          {/* Catatan juri (jika published) */}
-          {isPublished && note?.catatan && (
-            <div className="bidang-catatan">
-              <div className="bidang-catatan-label">📝 Catatan Dewan Juri</div>
-              <div className="bidang-catatan-text">"{note.catatan}"</div>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -141,7 +94,6 @@ export default function DashboardPage() {
 
   const [myScores,     setMyScores]     = useState([]);
   const [myNotes,      setMyNotes]      = useState([]);
-  const [settings,     setSettings]     = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [initialLoad,  setInitialLoad]  = useState(true);
 
@@ -150,9 +102,6 @@ export default function DashboardPage() {
     const { scores, notes } = await fetchMyScores(user.id);
     setMyScores(scores || []);
     setMyNotes(notes  || []);
-
-    const { data: s } = await supabase.from('event_settings').select('show_judge_notes').eq('id', 1).single();
-    if (s) setSettings(s);
     setInitialLoad(false);
   }, [user?.id, fetchMyScores]);
 
@@ -160,7 +109,7 @@ export default function DashboardPage() {
     loadData();
     fetchScoringMaster();
 
-    // Realtime
+    // Realtime listener for scores & notes
     if (!user?.id) return;
     const channel = supabase
       .channel(`myscore-${user?.id}`)
@@ -175,7 +124,7 @@ export default function DashboardPage() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [loadData, fetchScoringMaster]);
+  }, [loadData, fetchScoringMaster, user?.id]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -183,21 +132,8 @@ export default function DashboardPage() {
     setIsRefreshing(false);
   };
 
-  // Hitung nilai utama (adab + vokal + banjari, maks 100)
-  const bidangResults = BIDANG.map(b => {
-    const fs     = myScores.filter(s => s.field_id === b.id);
-    const note   = myNotes.find(n => n.field_id === b.id);
-    const result = calcBidangTotal(fs, note?.pengurangan || 0, b.id);
-    return { ...b, ...result, done: fs.length > 0 };
-  });
-
-  const nilaiUtama = bidangResults.every(b => b.done)
-    ? bidangResults.reduce((sum, b) => sum + b.total, 0)
-    : null;
-
-  const grade      = nilaiUtama != null ? getScoreGrade(nilaiUtama) : null;
-  const doneCount  = bidangResults.filter(b => b.done).length;
-  const isPublished = settings?.show_judge_notes;
+  const doneCount = BIDANG.filter(b => myScores.some(s => s.field_id === b.id)).length;
+  const allEvaluated = doneCount === BIDANG.length;
 
   return (
     <div className="dashboard-page">
@@ -235,115 +171,107 @@ export default function DashboardPage() {
               <div className="not-scored glass-card">
                 <div className="login-spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
               </div>
-            ) : doneCount === 0 ? (
-              <div className="not-scored glass-card">
-                <div className="not-scored__icon"><Clock size={40} /></div>
-                <h2 className="text-title">Nilai Belum Tersedia</h2>
-                <p style={{ color: 'var(--text-muted)', marginTop: 8, maxWidth: 380, textAlign: 'center' }}>
-                  Nilai akan muncul otomatis setelah Dewan Juri selesai melakukan penilaian.
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: 24 }}>
-                  <span className="status-dot live" /> Menunggu penilaian secara realtime...
-                </div>
-              </div>
             ) : (
               <>
-                {/* Total Nilai Utama */}
-                <div className="total-score-card glass-card">
-                  <div className="total-score-card__left">
-                    <div className="total-score-card__label">
-                      <CheckCircle size={14} /> Nilai Utama ({doneCount}/3 Bidang Selesai)
+                {/* Ringkasan Status Evaluasi (Tanpa Angka Skor Utama) */}
+                <div className="evaluasi-summary-card glass-card">
+                  <div className="evaluasi-summary-card__left">
+                    <div className="evaluasi-summary-card__status-tag">
+                      <CheckCircle size={14} /> Progress Evaluasi Dewan Juri
                     </div>
-                    {nilaiUtama != null ? (
-                      <>
-                        <div className="total-score-card__value gradient-text">
-                          {formatScore(nilaiUtama)} / 100
-                        </div>
-                        {grade && (
-                          <div className="total-score-card__grade" style={{ color: grade.color }}>
-                            <Award size={16} />{grade.label}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.9375rem', marginTop: 8 }}>
-                        Menunggu semua bidang selesai dinilai...
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                      <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                        Adab (30) + Vokal (40) + Musik Banjari (30) = 100
-                      </span>
+                    <div className="evaluasi-summary-card__title gradient-text">
+                      {allEvaluated
+                        ? 'Evaluasi Selesai'
+                        : doneCount > 0
+                        ? 'Evaluasi Sedang Berlangsung'
+                        : 'Menunggu Penilaian Juri'}
+                    </div>
+                    <p className="evaluasi-summary-card__desc">
+                      {allEvaluated
+                        ? 'Dewan juri telah menuntaskan evaluasi untuk penampilan grup Anda. Catatan dan evaluasi tiap bidang dapat disimak di bawah ini.'
+                        : doneCount > 0
+                        ? `${doneCount} dari 3 bidang utama telah selesai dievaluasi oleh dewan juri. Evaluasi diperbarui secara realtime.`
+                        : 'Penampilan grup Anda sedang dalam antrean / proses penilaian oleh dewan juri.'}
+                    </p>
+                    <div className="evaluasi-summary-card__meta">
+                      <span className="status-dot live" />
+                      <span>Evaluasi Resmi SMADA Hadrah Festival 2026</span>
                     </div>
                   </div>
-                  <div className="total-score-card__ring">
-                    <ScoreRing
-                      value={nilaiUtama}
-                      max={100}
-                      size={140}
-                      color={grade?.color || 'var(--emerald-400)'}
-                    />
+                  <div className="evaluasi-summary-card__right">
+                    <div className="evaluasi-progress-stat">
+                      <div className="evaluasi-progress-num gradient-text">{doneCount}/3</div>
+                      <div className="evaluasi-progress-label">Bidang Selesai</div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Progress status bidang */}
+                {/* Progress status bidang chips */}
                 <div className="glass-card" style={{ padding: '16px 20px' }}>
                   <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-                    Status Penilaian per Bidang
+                    Status Evaluasi per Bidang
                   </div>
                   <div className="bidang-status-row">
                     {BIDANG.map(b => {
                       const done = myScores.some(s => s.field_id === b.id);
                       return (
-                        <div key={b.id} className={`bidang-status-chip ${done ? 'bidang-status-chip--done' : ''}`}
-                          style={{ borderColor: done ? b.color : 'var(--border-subtle)', color: done ? b.color : 'var(--text-muted)' }}>
+                        <div
+                          key={b.id}
+                          className={`bidang-status-chip ${done ? 'bidang-status-chip--done' : ''}`}
+                          style={{ borderColor: done ? b.color : 'var(--border-subtle)', color: done ? b.color : 'var(--text-muted)' }}
+                        >
                           {done ? <CheckCircle size={13} /> : <Clock size={13} />}
                           <span>{b.label}</span>
+                          <span className="bidang-status-chip-sub">({done ? 'Dievaluasi' : 'Menunggu'})</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Detail per bidang */}
+                {/* Daftar Evaluasi per Bidang (Teks Murni, Angka Ditiadakan) */}
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Nilai per Bidang
+                  <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 14, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Evaluasi Dewan Juri per Bidang
                   </div>
                   {BIDANG.map(b => (
-                    <BidangScoreCard
+                    <BidangEvaluasiCard
                       key={b.id}
                       bidang={b}
                       scores={myScores}
                       notes={myNotes}
-                      criteriaList={scoringCriteria}
-                      isPublished={isPublished}
                     />
                   ))}
                 </div>
 
-                {/* Jingle — terpisah */}
+                {/* Kategori Jingle — Pengecualian: Nilai diizinkan untuk ditayangkan kepada peserta */}
                 {(() => {
                   const jingleScores = myScores.filter(s => s.field_id === 'jingle');
                   if (jingleScores.length === 0) return null;
                   const jingleNote = myNotes.find(n => n.field_id === 'jingle');
                   const jingleResult = calcBidangTotal(jingleScores, jingleNote?.pengurangan || 0, 'jingle');
                   const jingleCriteria = scoringCriteria.filter(c => c.field_id === 'jingle');
+
                   return (
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Nilai Jingle (Terpisah)
+                    <div style={{ marginTop: 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          Nilai Kategori Jingle
+                        </div>
+                        <span className="badge badge-gold" style={{ fontSize: '0.75rem', gap: 4 }}>
+                          <Star size={12} /> Khusus Kategori Jingle
+                        </span>
                       </div>
                       <div className="bidang-card glass-card bidang-card--done" style={{ borderLeft: '3px solid #f472b6' }}>
                         <div className="bidang-card__header">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Star size={15} style={{ color: '#f472b6' }} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <Star size={16} style={{ color: '#f472b6' }} />
                             <div>
                               <div className="bidang-card__label">Jingle</div>
-                              <div className="bidang-card__max">Nilai terpisah dari ranking utama</div>
+                              <div className="evaluasi-card__sub">Nilai resmi kategori Jingle</div>
                             </div>
                           </div>
-                          <div className="bidang-card__score" style={{ color: '#f472b6' }}>
+                          <div className="bidang-card__score" style={{ color: '#f472b6', fontSize: '1.5rem', fontWeight: 800 }}>
                             {formatScore(jingleResult.total)}
                           </div>
                         </div>
@@ -356,16 +284,28 @@ export default function DashboardPage() {
                                 <div key={c.id} className="bidang-kriteria-row">
                                   <span className="bidang-kriteria-label">{c.label}</span>
                                   <div className="bidang-kriteria-scores">
-                                    {sub != null ? <span className="kriteria-sub" style={{ color: '#f472b6' }}>{formatScore(sub, 2)}</span> : '—'}
+                                    {sub != null ? <span className="kriteria-sub" style={{ color: '#f472b6', fontWeight: 700 }}>{formatScore(sub, 2)}</span> : '—'}
                                   </div>
                                 </div>
                               );
                             })}
                           </div>
-                          <div className="bidang-summary-total" style={{ color: '#f472b6', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+                          <div className="bidang-summary-total" style={{ color: '#f472b6', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
                             <span>Total Nilai Jingle</span>
                             <span>{formatScore(jingleResult.total)}</span>
                           </div>
+                          {jingleNote?.catatan && (
+                            <div className="evaluasi-quote-box" style={{ marginTop: 14 }}>
+                              <div className="evaluasi-quote-header">
+                                <span className="evaluasi-quote-badge" style={{ color: '#f472b6', background: 'rgba(244,114,182,0.12)', borderColor: 'rgba(244,114,182,0.3)' }}>
+                                  📝 Catatan Juri Jingle
+                                </span>
+                              </div>
+                              <div className="evaluasi-quote-body">
+                                &ldquo;{jingleNote.catatan}&rdquo;
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

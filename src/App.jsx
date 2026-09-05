@@ -48,6 +48,14 @@ function ProtectedJuri({ children }) {
   return children;
 }
 
+function ProtectedInternal({ children }) {
+  const { user, isAdmin, isJuri, loading } = useAuthStore();
+  if (loading) return <FullScreenLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin && !isJuri) return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 function FullScreenLoader() {
   return (
     <div style={{
@@ -86,7 +94,9 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/"             element={<HomePage />} />
-          <Route path="/ranking"      element={<RankingPage />} />
+
+          {/* Internal: Admin & Juri Only */}
+          <Route path="/ranking"      element={<ProtectedInternal><RankingPage /></ProtectedInternal>} />
 
           {/* Peserta */}
           <Route path="/login"        element={<LoginPage />} />

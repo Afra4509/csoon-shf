@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Medal, Star, RefreshCw, Maximize2, Minimize2, Home, Lock, AlertTriangle } from 'lucide-react';
+import { Trophy, Medal, Star, RefreshCw, Maximize2, Minimize2, Home, AlertTriangle, Shield, ArrowLeft } from 'lucide-react';
 import { supabase } from '../supabase';
 import { compareRanking, formatScore, getScoreGrade } from '../utils/scoreCalc';
+import { useAuthStore } from '../store/authStore';
 import './RankingPage.css';
 
 function PodiumCard({ rank, participant, finalScore }) {
@@ -94,6 +95,7 @@ function RankRow({ rank, participant, finalScore, isTop3 }) {
 }
 
 export default function RankingPage() {
+  const { user, isAdmin, isJuri } = useAuthStore();
   const [rankingData,  setRankingData]  = useState([]);
   const [jingleData,   setJingleData]   = useState([]);
   const [settings,     setSettings]     = useState(null);
@@ -107,11 +109,6 @@ export default function RankingPage() {
     const { data: settingsData } = await supabase
       .from('event_settings').select('*').eq('id', 1).single();
     setSettings(settingsData);
-
-    if (!settingsData?.ranking_published) {
-      setLoading(false);
-      return;
-    }
 
     const [{ data: participants }, { data: finalScores }] = await Promise.all([
       supabase.from('participants').select('*'),
@@ -164,12 +161,7 @@ export default function RankingPage() {
   useEffect(() => {
     loadRanking();
     const interval = setInterval(loadRanking, 30000);
-    const channel = supabase
-      .channel('ranking-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'final_scores' }, loadRanking)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_settings' }, loadRanking)
-      .subscribe();
-    return () => { clearInterval(interval); supabase.removeChannel(channel); };
+    return () => clearInterval(interval);
   }, [loadRanking]);
 
   const toggleFullscreen = () => {
@@ -199,28 +191,7 @@ export default function RankingPage() {
   if (loading) return (
     <div className="ranking-page ranking-loading">
       <div className="login-spinner" style={{ width: 48, height: 48, borderWidth: 4 }} />
-      <p style={{ color: 'var(--text-muted)', marginTop: 16 }}>Memuat ranking...</p>
-    </div>
-  );
-
-  if (!settings?.ranking_published) return (
-    <div className="ranking-page ranking-hidden">
-      <div className="ranking-hidden-card glass-card-strong">
-        <div className="ranking-hidden-icon"><Lock size={48} /></div>
-        <h1 className="text-headline gradient-text">SMADA Hadrah Festival 2026</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.0625rem', marginTop: 12, textAlign: 'center' }}>
-          Hasil ranking belum dipublikasikan.
-        </p>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'center' }}>
-          6 September 2026 · Halaman ini otomatis tampil setelah Admin mempublikasikan hasil.
-        </p>
-        <div style={{ display: 'flex', gap: 12, marginTop: 28, justifyContent: 'center' }}>
-          <Link to="/" className="btn btn-outline"><Home size={16} /> Beranda</Link>
-          <button className="btn btn-ghost btn-sm" onClick={loadRanking}>
-            <RefreshCw size={14} /> Cek Ulang
-          </button>
-        </div>
-      </div>
+      <p style={{ color: 'var(--text-muted)', marginTop: 16 }}>Memuat data pemeringkatan internal...</p>
     </div>
   );
 
@@ -231,25 +202,32 @@ export default function RankingPage() {
         <div className="ranking-header-left">
           <div className="ranking-logo"><img src="/rela.jpg" alt="SHF" /></div>
           <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.75rem', fontWeight: 700 }}>
+                <Shield size={12} /> Akses Internal (Admin &amp; Juri)
+              </span>
+            </div>
             <h1 className="ranking-title gradient-text">SMADA Hadrah Festival 2026</h1>
-            <div className="ranking-subtitle">Hasil Akhir Penilaian Resmi · 6 September 2026</div>
+            <div className="ranking-subtitle">Rekap &amp; Pemeringkatan Internal · 6 September 2026</div>
           </div>
         </div>
         <div className="ranking-header-right">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
             <div className="badge badge-green" style={{ alignItems: 'center', gap: 6 }}>
-              <span className="status-dot live" /> Live
+              <span className="status-dot live" /> Live Data
             </div>
             {lastUpdated && (
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 {lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
-            <button className="btn btn-ghost btn-icon" onClick={loadRanking}><RefreshCw size={16} /></button>
-            <button className="btn btn-ghost btn-icon" onClick={toggleFullscreen}>
+            <button className="btn btn-ghost btn-icon" onClick={loadRanking} title="Segarkan Data"><RefreshCw size={16} /></button>
+            <button className="btn btn-ghost btn-icon" onClick={toggleFullscreen} title="Fullscreen">
               {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
-            <Link to="/" className="btn btn-ghost btn-icon"><Home size={16} /></Link>
+            <Link to={isAdmin ? '/admin' : '/juri'} className="btn btn-ghost btn-sm" style={{ gap: 6 }}>
+              <ArrowLeft size={14} /> Kembali ke {isAdmin ? 'Admin' : 'Panel Juri'}
+            </Link>
           </div>
         </div>
       </div>

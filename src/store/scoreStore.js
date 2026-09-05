@@ -95,6 +95,7 @@ export const useScoreStore = create((set, get) => ({
         field_id:       fieldId,
         catatan:        catatan || null,
         pengurangan:    0, // pengurangan di-handle per kriteria (maks - jali - khafi)
+        is_published:   true,
         updated_at:     new Date().toISOString(),
       }, { onConflict: 'participant_id,judge_id,field_id' });
 
@@ -215,11 +216,11 @@ export const useScoreStore = create((set, get) => ({
     };
   },
 
-  // ── Peserta: fetch own scores ─────────────────────────────
+  // ── Peserta: fetch own scores & evaluations ───────────────
   fetchMyScores: async (participantId) => {
     const [{ data: scores }, { data: notes }] = await Promise.all([
-      supabase.from('scores').select('*, scoring_criteria(label, sort_order, field_id), judges(full_name)').eq('participant_id', participantId),
-      supabase.from('judge_notes').select('*').eq('participant_id', participantId).eq('is_published', true),
+      supabaseAdmin.from('scores').select('*, scoring_criteria(label, sort_order, field_id), judges(full_name)').eq('participant_id', participantId),
+      supabaseAdmin.from('judge_notes').select('*, judges(full_name)').eq('participant_id', participantId),
     ]);
     return { scores: scores || [], notes: notes || [] };
   },

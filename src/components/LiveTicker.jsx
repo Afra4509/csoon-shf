@@ -18,70 +18,36 @@ export default function LiveTicker() {
 
       const msgs = [];
 
-      // ── Ranking sudah dipublikasikan → tampilkan top hasil ─
-      if (settings?.ranking_published) {
-        const { data: finalScores } = await supabase
-          .from('final_scores')
-          .select('participant_id, nilai_utama, is_complete')
-          .eq('is_complete', true)
-          .order('nilai_utama', { ascending: false })
-          .limit(5);
+      const [{ data: finalScores }, { data: parts }] = await Promise.all([
+        supabase.from('final_scores').select('participant_id, is_complete, updated_at').order('updated_at', { ascending: false }),
+        supabase.from('participants').select('id, group_name, kategori, no_urut, status'),
+      ]);
 
-        if (finalScores?.length) {
-          const ids = finalScores.map(f => f.participant_id);
-          const { data: parts } = await supabase
-            .from('participants')
-            .select('id, group_name, kategori')
-            .in('id', ids);
+      const completedCount = finalScores?.filter(f => f.is_complete).length ?? 0;
+      const total = parts?.length ?? 0;
 
-          const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-          finalScores.forEach((s, i) => {
-            const p = parts?.find(x => x.id === s.participant_id);
-            if (!p) return;
-            msgs.push(`${medals[i] || `#${i + 1}`} ${p.group_name} [${p.kategori?.toUpperCase()}] — ${formatScore(s.nilai_utama)}/100`);
-          });
-        }
-
-        setIsLive(true);
-
-      // ── Sedang penilaian → tampilkan progress sederhana ────
-      } else {
-        const { data: finalScores } = await supabase
-          .from('final_scores')
-          .select('participant_id, nilai_utama, is_complete, updated_at')
-          .order('updated_at', { ascending: false });
-
-        const completedCount = finalScores?.filter(f => f.is_complete).length ?? 0;
-        const totalScored    = finalScores?.length ?? 0;
-
+      if (total > 0) {
         if (completedCount > 0) {
-          // Ada data — tampilkan progress (tanpa bocorkan nilai)
-          const { data: parts } = await supabase
-            .from('participants')
-            .select('id, group_name, kategori, no_urut, status');
-
-          const total = parts?.length ?? 0;
-
-          msgs.push(`📊 ${completedCount} dari ${total} peserta telah selesai dinilai`);
-
-          // Siapa yang sedang tampil
-          const tampil = parts?.filter(p => p.status === 'tampil') ?? [];
-          tampil.forEach(p => {
-            msgs.push(`🎤 Sedang tampil: ${p.group_name} [${p.kategori?.toUpperCase()}] No.${p.no_urut}`);
-          });
-
-          // Tampilkan nama peserta yang terakhir selesai, TANPA nilai (belum dipublikasikan)
-          const recent = (finalScores ?? [])
-            .filter(f => f.is_complete)
-            .slice(0, 3);
-          const recentIds = recent.map(s => s.participant_id);
-          const recentParts = parts?.filter(x => recentIds.includes(x.id)) ?? [];
-          recentParts.forEach(p => {
-            msgs.push(`✅ ${p.group_name} — Selesai dinilai`);
-          });
-
-          setIsLive(tampil.length > 0);
+          msgs.push(`📊 ${completedCount} dari ${total} peserta telah selesai dievaluasi Dewan Juri`);
         }
+
+        // Siapa yang sedang tampil
+        const tampil = parts?.filter(p => p.status === 'tampil') ?? [];
+        tampil.forEach(p => {
+          msgs.push(`🎤 Sedang tampil: ${p.group_name} [${p.kategori?.toUpperCase()}] No.${p.no_urut}`);
+        });
+
+        // Tampilkan peserta yang baru selesai tampil
+        const recentCompleted = (finalScores ?? [])
+          .filter(f => f.is_complete)
+          .slice(0, 3);
+        const recentIds = recentCompleted.map(s => s.participant_id);
+        const recentParts = parts?.filter(x => recentIds.includes(x.id)) ?? [];
+        recentParts.forEach(p => {
+          msgs.push(`✅ ${p.group_name} — Selesai tampil & dievaluasi`);
+        });
+
+        setIsLive(tampil.length > 0);
       }
 
       // Fallback — belum ada data sama sekali

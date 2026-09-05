@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Edit3, Download, LogOut, Search,
@@ -640,10 +640,15 @@ function RankingTab({ participants, finalScores, settings, finalizeScoring, undo
   return (
     <div className="admin-tab">
       <div className="admin-tab-header">
-        <h2 className="text-title">Ranking & Finalisasi</h2>
-        <button className="btn btn-outline btn-sm" onClick={handleRecalc} disabled={loading}>
-          <RefreshCw size={14} className={loading ? 'spin-icon' : ''} /> Rekalkulasi Nilai
-        </button>
+        <h2 className="text-title">Ranking &amp; Finalisasi</h2>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Link to="/ranking" className="btn btn-outline btn-sm" style={{ gap: 6 }}>
+            <Trophy size={14} style={{ color: 'var(--gold-400)' }} /> Buka Halaman Peringkat
+          </Link>
+          <button className="btn btn-outline btn-sm" onClick={handleRecalc} disabled={loading}>
+            <RefreshCw size={14} className={loading ? 'spin-icon' : ''} /> Rekalkulasi Nilai
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -651,10 +656,10 @@ function RankingTab({ participants, finalScores, settings, finalizeScoring, undo
         <div className="glass-card" style={{ padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ fontWeight: 700, fontSize: '1.125rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-              Status Publikasi Ranking {settings?.ranking_published ? <span className="badge badge-green">Publik</span> : <span className="badge badge-muted">Tersembunyi</span>}
+              Status Peringkat Internal {settings?.ranking_published ? <span className="badge badge-green">Terkunci &amp; Terverifikasi</span> : <span className="badge badge-muted">Draft Internal</span>}
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 4 }}>
-              Jika dipublikasikan, peserta dan masyarakat dapat melihat halaman Ranking (Leaderboard).
+              Peringkat bersifat internal (hanya dapat diakses oleh Administrator dan Dewan Juri) dan tidak ditampilkan kepada peserta.
             </p>
           </div>
           <div>

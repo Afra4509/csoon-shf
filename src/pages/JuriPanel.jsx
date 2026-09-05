@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Edit3, History, LogOut, Save,
   CheckCircle, Clock, Search, AlertCircle, Menu,
-  RefreshCw, ChevronRight, Award, Minus, Plus
+  RefreshCw, ChevronRight, Award, Minus, Plus, Trophy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -16,7 +16,7 @@ const BIDANG_CONFIG = {
   adab:    { label: 'Adab dan Syair',     maxScore: 30, color: 'var(--gold-400)',     desc: 'Juri: Gus Dawud Zahiruddin' },
   vokal:   { label: 'Bidang Suara/Vokal', maxScore: 40, color: 'var(--emerald-400)', desc: 'Juri: Gus Munawwirul Mukin' },
   banjari: { label: 'Musik Banjari',      maxScore: 30, color: '#818cf8',             desc: 'Juri: Gus Muhsin' },
-  jingle:  { label: 'Jingle',             maxScore: 30, color: '#f472b6',             desc: 'Juri: (dalam konfirmasi)' },
+  jingle:  { label: 'Jingle',             maxScore: 30, color: '#f472b6',             desc: 'Juri: Ustadz Alvan' },
 };
 
 /* ── Komponen: baris kriteria dalam tabel (sistem PENGURANGAN) ── */
@@ -738,6 +738,10 @@ export default function JuriPanel() {
               <span>{item.label}</span>
             </button>
           ))}
+          <Link to="/ranking" className="juri-nav-item" style={{ textDecoration: 'none' }}>
+            <Trophy size={18} style={{ color: 'var(--gold-400)' }} />
+            <span>Peringkat Internal</span>
+          </Link>
         </nav>
 
         <div className="juri-sidebar-footer">
@@ -761,6 +765,9 @@ export default function JuriPanel() {
             <Menu size={20} />
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <Link to="/ranking" className="btn btn-outline btn-sm" style={{ gap: 6 }}>
+              <Trophy size={14} style={{ color: 'var(--gold-400)' }} /> Peringkat Internal
+            </Link>
             <button className="btn btn-outline btn-sm" onClick={handleRefresh} title="Refresh data">
               <RefreshCw size={14} /> Refresh
             </button>

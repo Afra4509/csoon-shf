@@ -135,12 +135,33 @@ export const useAuthStore = create((set, get) => ({
     });
   },
 
-  // ── Login Peserta (by username) ────────────────────────────
+  // ── Login Peserta (by username or email) ───────────────────
   loginPeserta: async (username, password) => {
     set({ loading: true, error: null });
-    const email = `${username.trim().toLowerCase()}@shf.ac.id`;
+    const cleanUser = username.trim().toLowerCase();
+    let email = cleanUser.includes('@') ? cleanUser : `${cleanUser}@shf.ac.id`;
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    // Fallback: jika login gagal, cari participant di DB berdasarkan username dan gunakan auth ID-nya
+    if (error) {
+      const { data: part } = await supabaseAdmin
+        .from('participants')
+        .select('id, username')
+        .ilike('username', cleanUser)
+        .maybeSingle();
+
+      if (part) {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(part.id);
+        if (authUser?.user?.email) {
+          const res = await supabase.auth.signInWithPassword({ email: authUser.user.email, password });
+          if (!res.error) {
+            data = res.data;
+            error = null;
+          }
+        }
+      }
+    }
 
     if (error) {
       set({ loading: false, error: 'Username atau password salah.' });

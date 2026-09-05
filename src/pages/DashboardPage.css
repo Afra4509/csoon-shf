@@ -1,4 +1,4 @@
-/* DashboardPage.css v3 */
+/* DashboardPage.css v4 - Participant Evaluation Visibility */
 
 .dashboard-page { min-height: 100vh; background: var(--bg-base); }
 
@@ -49,45 +49,98 @@
 
 .not-scored__icon { color: var(--text-muted); margin-bottom: 4px; }
 
-/* ── Total score card ── */
-.total-score-card {
+/* ── Evaluasi Summary Card ── */
+.evaluasi-summary-card {
   padding: 28px !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(15, 23, 42, 0.6) 100%);
+  position: relative;
+  overflow: hidden;
 }
 
-.total-score-card__left { flex: 1; }
+.evaluasi-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--emerald-500), var(--gold-400));
+}
 
-.total-score-card__label {
-  display: flex;
+.evaluasi-summary-card__left { flex: 1; }
+
+.evaluasi-summary-card__status-tag {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--emerald-400);
   margin-bottom: 8px;
 }
 
-.total-score-card__value {
-  font-size: 3rem;
+.evaluasi-summary-card__title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.evaluasi-summary-card__desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 540px;
+}
+
+.evaluasi-summary-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.evaluasi-summary-card__right { flex-shrink: 0; }
+
+.evaluasi-progress-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+  text-align: center;
+  padding: 8px;
+}
+
+.evaluasi-progress-num {
+  font-size: 1.85rem;
   font-weight: 900;
   line-height: 1;
 }
 
-.total-score-card__grade {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  font-size: 1rem;
-  margin-top: 10px;
+.evaluasi-progress-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
-
-.total-score-card__ring { flex-shrink: 0; }
 
 /* ── Status chips ── */
 .bidang-status-row {
@@ -99,20 +152,26 @@
 .bidang-status-chip {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
+  gap: 6px;
+  padding: 6px 14px;
   border-radius: 20px;
   border: 1.5px solid;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
-/* ── Bidang score cards ── */
+.bidang-status-chip-sub {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* ── Bidang cards ── */
 .bidang-card {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   overflow: hidden;
   padding: 0 !important;
-  transition: box-shadow 0.2s;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-subtle);
 }
 
 .bidang-card:last-child { margin-bottom: 0; }
@@ -121,25 +180,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 18px 22px;
   gap: 12px;
 }
 
-.bidang-card__label { font-weight: 700; font-size: 0.9375rem; }
-.bidang-card__max   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.bidang-card__label { font-weight: 700; font-size: 1.05rem; }
+.evaluasi-card__sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; font-weight: 500; }
 
 .bidang-card__right { display: flex; align-items: center; }
 
-.bidang-card__score {
-  font-size: 1.5rem;
-  font-weight: 800;
-}
-
-.bidang-card__max-label {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  margin-left: 2px;
+.evaluasi-badge-done {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 5px 12px;
+  border-radius: 20px;
 }
 
 .bidang-card__pending {
@@ -150,16 +208,95 @@
   font-size: 0.8125rem;
 }
 
-.bidang-card__detail {
+.evaluasi-card__content {
   border-top: 1px solid var(--border-subtle);
+  padding: 20px 22px;
+}
+
+/* ── Quote Box untuk Teks Evaluasi ── */
+.evaluasi-quote-box {
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--emerald-400);
+  border-radius: 10px;
   padding: 16px 20px;
 }
 
-/* ── Kriteria detail ── */
+.evaluasi-quote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.evaluasi-quote-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--emerald-400);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 3px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.evaluasi-quote-author {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.evaluasi-quote-body {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.evaluasi-empty-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.evaluasi-pending-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ── Jingle Styles (tetap memuat angka) ── */
+.bidang-card__score {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.bidang-card__detail {
+  border-top: 1px solid var(--border-subtle);
+  padding: 18px 22px;
+}
+
 .bidang-kriteria-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -167,8 +304,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .bidang-kriteria-label { color: var(--text-muted); flex: 1; }
@@ -177,63 +316,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
 }
 
-.kriteria-jali  { color: var(--text-muted); background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; }
-.kriteria-khafi { color: var(--text-muted); background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; }
-.kriteria-sub   { font-weight: 700; font-size: 0.875rem; }
-
-/* ── Summary ── */
-.bidang-summary {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.bidang-summary-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
+.kriteria-sub { font-weight: 700; font-size: 0.95rem; }
 
 .bidang-summary-total {
   display: flex;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 0.9375rem;
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 8px;
-  margin-top: 4px;
+  font-size: 1rem;
 }
-
-/* ── Catatan ── */
-.bidang-catatan {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 12px;
-  margin-top: 12px;
-}
-
-.bidang-catatan-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.bidang-catatan-text {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  font-style: italic;
-  line-height: 1.6;
-}
-
-.score-ring { position: relative; }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
@@ -241,8 +334,8 @@
     grid-template-columns: 1fr;
   }
   .dashboard-sidebar { order: -1; }
-  .total-score-card { flex-direction: column; align-items: flex-start; }
-  .total-score-card__value { font-size: 2.25rem; }
+  .evaluasi-summary-card { flex-direction: column; align-items: flex-start; }
+  .evaluasi-summary-card__title { font-size: 1.5rem; }
 }
 
 @media (max-width: 500px) {
