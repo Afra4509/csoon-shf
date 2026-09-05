@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import HomePage        from './pages/HomePage';
@@ -10,24 +10,33 @@ import JuriLoginPage   from './pages/JuriLoginPage';
 import JuriPanel       from './pages/JuriPanel';
 import RankingPage     from './pages/RankingPage';
 
+/* ── Quick Redirect for QR / Barcode Scan Links ── */
+function QuickRefRedirect() {
+  const { id } = useParams();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const ref = id || query.get('ref') || query.get('id') || query.get('p') || query.get('peserta');
+  return <Navigate to={`/dashboard${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`} replace />;
+}
+
 /* ── Route Guards ── */
 function ProtectedPeserta({ children }) {
   const { user, loading, loginByRef } = useAuthStore();
   const location = useLocation();
   const query = new URLSearchParams(location.search);
-  const ref = query.get('ref');
+  const ref = query.get('ref') || query.get('id') || query.get('p') || query.get('peserta');
   
-  const [checkingRef, setCheckingRef] = useState(!!ref && !user);
+  const needRefLogin = !!ref && (!user || (user.id !== ref && user.username !== ref) || user.role !== 'peserta');
+  const [checkingRef, setCheckingRef] = useState(needRefLogin);
 
   useEffect(() => {
-    if (ref && !user && !loading) {
+    if (needRefLogin) {
       setCheckingRef(true);
       loginByRef(ref).finally(() => setCheckingRef(false));
-    } else if (!ref || user) {
+    } else {
       setCheckingRef(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref, loading]);
+  }, [needRefLogin, ref, loginByRef]);
 
   if (loading || checkingRef) return <FullScreenLoader />;
   if (!user || user.role !== 'peserta') return <Navigate to="/login" replace />;
@@ -101,6 +110,13 @@ export default function App() {
           {/* Peserta */}
           <Route path="/login"        element={<LoginPage />} />
           <Route path="/dashboard"    element={<ProtectedPeserta><DashboardPage /></ProtectedPeserta>} />
+
+          {/* Quick QR / Barcode Scan Links */}
+          <Route path="/p/:id"        element={<QuickRefRedirect />} />
+          <Route path="/peserta/:id"  element={<QuickRefRedirect />} />
+          <Route path="/qr/:id"       element={<QuickRefRedirect />} />
+          <Route path="/scan/:id"     element={<QuickRefRedirect />} />
+          <Route path="/scan"         element={<QuickRefRedirect />} />
 
           {/* Juri */}
           <Route path="/juri/login"   element={<JuriLoginPage />} />

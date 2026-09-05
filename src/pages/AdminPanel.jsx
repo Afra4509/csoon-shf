@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Edit3, Download, LogOut, Search,
   CheckCircle, Clock, Zap, BarChart2, X, AlertCircle,
   Menu, ShieldCheck, Trophy, Eye, EyeOff,
-  RefreshCw, Key, UserPlus, ChevronDown, ChevronUp, Star, Trash2
+  RefreshCw, Key, UserPlus, ChevronDown, ChevronUp, Star, Trash2, QrCode
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
@@ -12,6 +12,7 @@ import { useScoreStore } from '../store/scoreStore';
 import { useJuriStore } from '../store/juriStore';
 import { useEventStore } from '../store/eventStore';
 import { formatScore, calcBidangTotal, getStatusPenilaian, compareRanking } from '../utils/scoreCalc';
+import QRCodeDisplay from '../components/QRCodeDisplay';
 import './AdminPanel.css';
 
 const NAV_ITEMS = [
@@ -166,6 +167,7 @@ function PesertaTab({ participants, updateStatus, createParticipant, updateParti
   const [search,      setSearch]      = useState('');
   const [filterKat,   setFilterKat]   = useState('all');
   const [showModal,   setShowModal]   = useState(false);
+  const [qrTarget,    setQrTarget]    = useState(null);
   const [editTarget,  setEditTarget]  = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -262,6 +264,7 @@ function PesertaTab({ participants, updateStatus, createParticipant, updateParti
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-outline btn-icon btn-sm" onClick={() => setQrTarget(p)} title="Lihat & Unduh QR Barcode"><QrCode size={14} /></button>
                       <button className="btn btn-outline btn-icon btn-sm" onClick={() => openEdit(p)} title="Edit"><Edit3 size={14} /></button>
                       <button className="btn btn-outline btn-icon btn-sm" onClick={() => handleDelete(p.id, p.group_name)} style={{ color: 'var(--red-400)', borderColor: 'var(--red-400)' }} title="Hapus"><X size={14} /></button>
                     </div>
@@ -322,6 +325,28 @@ function PesertaTab({ participants, updateStatus, createParticipant, updateParti
                 <button type="submit" className="btn btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Loading...' : 'Simpan'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal QR Code Peserta ── */}
+      {qrTarget && (
+        <div className="modal-overlay" onClick={() => setQrTarget(null)}>
+          <div className="modal-content animate-scale-in" style={{ maxWidth: 420, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="text-title" style={{ fontSize: '1.125rem' }}>QR Code Peserta</h3>
+              <button className="btn-icon" onClick={() => setQrTarget(null)}><X size={20}/></button>
+            </div>
+            <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <QRCodeDisplay
+                participantId={qrTarget.id}
+                participantName={qrTarget.group_name}
+                size={200}
+              />
+              <div style={{ marginTop: 16, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                No. Urut {qrTarget.no_urut} · {qrTarget.kategori?.toUpperCase()} {qrTarget.school_name ? `· ${qrTarget.school_name}` : ''}
+              </div>
+            </div>
           </div>
         </div>
       )}

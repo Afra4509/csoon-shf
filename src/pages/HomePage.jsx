@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { LogIn, ChevronDown, Star, Users, Trophy, Music } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ParticleBackground from '../components/ParticleBackground';
@@ -44,6 +45,16 @@ const STATS = [
 
 export default function HomePage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const ref = query.get('ref') || query.get('id') || query.get('p') || query.get('peserta');
+    if (ref) {
+      navigate(`/dashboard?ref=${encodeURIComponent(ref)}`, { replace: true });
+    }
+  }, [location.search, navigate]);
 
   const getDashboardLink = () => {
     if (user?.role === 'admin') return '/admin';

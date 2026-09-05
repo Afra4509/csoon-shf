@@ -19,6 +19,21 @@ export const useAuthStore = create((set, get) => ({
   init: async () => {
     set({ loading: true });
 
+    // 0. Prioritaskan parameter ref/id/p dari URL saat scanning QR / barcode
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlRef = searchParams.get('ref') || searchParams.get('id') || searchParams.get('p') || searchParams.get('peserta');
+      if (urlRef) {
+        const res = await get().loginByRef(urlRef);
+        if (res.success) {
+          _attachAuthListener();
+          return;
+        }
+      }
+    } catch {
+      // ignore URL parsing error
+    }
+
     // 1. Coba pulihkan sesi Supabase nyata (Juri dan Peserta biasa)
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
@@ -27,29 +42,7 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
-    // 2. Cek sesi admin backdoor di localStorage
-    const adminRaw = localStorage.getItem(LS_ADMIN);
-    if (adminRaw) {
-      try {
-        const { email } = JSON.parse(adminRaw);
-        if (email === 'admin@shf.ac.id') {
-          set({
-            user:    { id: 'admin-hardcode-id', email, full_name: 'Administrator', role: 'admin' },
-            role:    'admin',
-            isAdmin: true,
-            isJuri:  false,
-            loading: false,
-            error:   null,
-          });
-          _attachAuthListener();
-          return;
-        }
-      } catch {
-        localStorage.removeItem(LS_ADMIN);
-      }
-    }
-
-    // 3. Cek sesi QR-code peserta di localStorage
+    // 2. Cek sesi QR-code peserta di localStorage TERLEBIH DAHULU
     const refRaw = localStorage.getItem(LS_REF);
     if (refRaw) {
       try {
@@ -76,6 +69,28 @@ export const useAuthStore = create((set, get) => ({
         }
       } catch {
         localStorage.removeItem(LS_REF);
+      }
+    }
+
+    // 3. Cek sesi admin backdoor di localStorage
+    const adminRaw = localStorage.getItem(LS_ADMIN);
+    if (adminRaw) {
+      try {
+        const { email } = JSON.parse(adminRaw);
+        if (email === 'admin@shf.ac.id') {
+          set({
+            user:    { id: 'admin-hardcode-id', email, full_name: 'Administrator', role: 'admin' },
+            role:    'admin',
+            isAdmin: true,
+            isJuri:  false,
+            loading: false,
+            error:   null,
+          });
+          _attachAuthListener();
+          return;
+        }
+      } catch {
+        localStorage.removeItem(LS_ADMIN);
       }
     }
 
@@ -225,19 +240,81 @@ export const useAuthStore = create((set, get) => ({
     return { success: true };
   },
 
-  // ── Auto Login Peserta (by QR Code ref ID) ─────────────────
-  // Sesi ini tidak berbasis Supabase, disimpan di localStorage agar tahan refresh.
-  loginByRef: async (participantId) => {
+  // ── Auto Login Peserta (by QR Code ref ID / barcode) ────────
+  // Sesi ini disimpan di localStorage agar tahan refresh.
+  loginByRef: async (refIdentifier) => {
+    if (!refIdentifier) return { success: false };
+    const clean = String(refIdentifier).trim();
     set({ loading: true, error: null });
-    const { data: participant } = await supabaseAdmin
-      .from('participants')
-      .select('*')
-      .eq('id', participantId)
-      .single();
+
+    let participant = null;
+
+    // 1. Cek apakah format UUID
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean);
+    if (isUUID) {
+      const { data } = await supabaseAdmin
+        .from('participants')
+        .select('*')
+        .eq('id', clean)
+        .maybeSingle();
+      participant = data;
+    }
+
+    // 2. Cek berdasarkan username
+    if (!participant) {
+      const cleanUser = clean.toLowerCase();
+      const { data } = await supabaseAdmin
+        .from('participants')
+        .select('*')
+        .ilike('username', cleanUser)
+        .maybeSingle();
+      participant = data;
+    }
+
+    // 3. Cek berdasarkan nomor urut & kategori (e.g. 'SD-9', 'SMP-11', 'SD 9', 'SD9', atau angka '9')
+    if (!participant) {
+      const matchKatNo = clean.match(/^(sd|smp)[-_\s]*(\d+)$/i);
+      if (matchKatNo) {
+        const kat = matchKatNo[1].toLowerCase();
+        const num = parseInt(matchKatNo[2], 10);
+        const { data } = await supabaseAdmin
+          .from('participants')
+          .select('*')
+          .eq('kategori', kat)
+          .eq('no_urut', num)
+          .maybeSingle();
+        participant = data;
+      } else if (/^\d+$/.test(clean)) {
+        const num = parseInt(clean, 10);
+        const { data } = await supabaseAdmin
+          .from('participants')
+          .select('*')
+          .eq('no_urut', num)
+          .limit(1)
+          .maybeSingle();
+        participant = data;
+      }
+    }
+
+    // 4. Stem matching: hapus _sd... atau _smp... jika ada dan cocokkan ke username atau group_name
+    if (!participant) {
+      const stem = clean.replace(/_(sd|smp)\d+$/i, '').replace(/[^a-z0-9]/g, '');
+      if (stem.length >= 3) {
+        const { data } = await supabaseAdmin
+          .from('participants')
+          .select('*')
+          .or(`username.ilike.%${stem}%,group_name.ilike.%${stem}%`)
+          .limit(1)
+          .maybeSingle();
+        participant = data;
+      }
+    }
 
     if (participant) {
+      // Hapus sesi admin lama agar tidak konflik saat scan QR peserta
+      localStorage.removeItem(LS_ADMIN);
       // Simpan ke localStorage agar sesi bertahan setelah refresh
-      localStorage.setItem(LS_REF, JSON.stringify({ participantId }));
+      localStorage.setItem(LS_REF, JSON.stringify({ participantId: participant.id }));
       set({
         user:    { ...participant, role: 'peserta' },
         role:    'peserta',
@@ -246,9 +323,9 @@ export const useAuthStore = create((set, get) => ({
         loading: false,
         error:   null,
       });
-      return { success: true };
+      return { success: true, participant };
     }
-    
+
     set({ loading: false, error: 'Peserta tidak ditemukan.' });
     return { success: false };
   },
@@ -339,13 +416,22 @@ function _attachAuthListener() {
   _listenerAttached = true;
 
   supabase.auth.onAuthStateChange(async (_event, session) => {
+    const hasRefSession = !!localStorage.getItem(LS_REF);
+    const urlHasRef = typeof window !== 'undefined' && (
+      new URLSearchParams(window.location.search).has('ref') ||
+      new URLSearchParams(window.location.search).has('id') ||
+      new URLSearchParams(window.location.search).has('p') ||
+      new URLSearchParams(window.location.search).has('peserta')
+    );
+
     if (session?.user) {
-      await useAuthStore.getState()._resolveUser(session.user);
+      if (!hasRefSession && !urlHasRef) {
+        await useAuthStore.getState()._resolveUser(session.user);
+      }
     } else {
       // Hanya logout jika tidak ada sesi non-Supabase aktif
       const hasAdminSession = !!localStorage.getItem(LS_ADMIN);
-      const hasRefSession   = !!localStorage.getItem(LS_REF);
-      if (!hasAdminSession && !hasRefSession) {
+      if (!hasAdminSession && !hasRefSession && !urlHasRef) {
         useAuthStore.setState({
           user: null, role: null, isAdmin: false, isJuri: false, loading: false,
         });

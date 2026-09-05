@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { User, Lock, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import ParticleBackground from '../components/ParticleBackground';
@@ -9,8 +9,23 @@ export default function LoginPage() {
   const [username, setUsername]   = useState('');
   const [password, setPassword]   = useState('');
   const [showPass, setShowPass]   = useState(false);
-  const { loginPeserta, loading, error, clearError } = useAuthStore();
+  const { user, loginPeserta, loginByRef, loading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const ref = query.get('ref') || query.get('id') || query.get('p') || query.get('peserta');
+    if (ref) {
+      loginByRef(ref).then(res => {
+        if (res.success) {
+          navigate('/dashboard', { replace: true });
+        }
+      });
+    } else if (user && user.role === 'peserta') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [location.search, user, loginByRef, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
