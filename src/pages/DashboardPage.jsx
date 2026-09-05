@@ -103,7 +103,7 @@ export default function DashboardPage() {
     setMyScores(scores || []);
     setMyNotes(notes  || []);
     setInitialLoad(false);
-  }, [user?.id, fetchMyScores]);
+  }, [user, fetchMyScores]);
 
   useEffect(() => {
     loadData();

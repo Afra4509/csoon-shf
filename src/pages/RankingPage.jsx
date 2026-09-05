@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Medal, Star, RefreshCw, Maximize2, Minimize2, Home, AlertTriangle, Shield, ArrowLeft } from 'lucide-react';
+import { Trophy, Medal, Star, RefreshCw, Maximize2, Minimize2, AlertTriangle, Shield, ArrowLeft } from 'lucide-react';
 import { supabase } from '../supabase';
 import { compareRanking, formatScore, getScoreGrade } from '../utils/scoreCalc';
 import { useAuthStore } from '../store/authStore';
@@ -23,22 +23,16 @@ function PodiumCard({ rank, participant, finalScore }) {
         <div className="podium-name">{participant.group_name}</div>
         <div className="podium-school">{participant.school_name || ''}</div>
         <div className="podium-kat">
-          <span className={`badge ${participant.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>
+          <span className={`badge badge-xs ${participant.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>
             {participant.kategori?.toUpperCase()}
           </span>
+          <span className="podium-no">No. {participant.no_urut}</span>
         </div>
-        {finalScore?.nilai_utama != null && (
-          <div className="podium-score">{formatScore(finalScore.nilai_utama)}</div>
-        )}
-        {grade && <div className="podium-grade" style={{ color: grade.color }}>{grade.label}</div>}
-        {/* Breakdown */}
-        {finalScore && (
-          <div className="podium-breakdown">
-            <span>A: {formatScore(finalScore.nilai_adab ?? '—', 1)}</span>
-            <span>V: {formatScore(finalScore.nilai_vokal ?? '—', 1)}</span>
-            <span>B: {formatScore(finalScore.nilai_banjari ?? '—', 1)}</span>
-          </div>
-        )}
+        <div className="podium-score">
+          <span className="podium-score-val">{formatScore(finalScore?.nilai_utama)}</span>
+          <span className="podium-score-lbl">Nilai Utama</span>
+        </div>
+        {grade && <div className="podium-grade" style={{ color: grade.color }}>Predikat: {grade.emoji} {grade.label}</div>}
       </div>
       <div className="podium-base" style={{ height: cfg.height }} />
     </div>
@@ -46,59 +40,51 @@ function PodiumCard({ rank, participant, finalScore }) {
 }
 
 function RankRow({ rank, participant, finalScore, isTop3 }) {
-  const grade  = finalScore?.nilai_utama ? getScoreGrade(finalScore.nilai_utama) : null;
-  const isTied = finalScore?.is_tied;
+  const grade = finalScore?.nilai_utama ? getScoreGrade(finalScore.nilai_utama) : null;
 
   return (
-    <tr className={`rank-row ${isTop3 ? 'rank-row--top3' : ''} ${isTied ? 'rank-row--tied' : ''}`}>
-      <td className="rank-number">
-        {rank <= 3 ? (
-          <span className="rank-badge" style={{ '--rank-color': rank === 1 ? '#f59e0b' : rank === 2 ? '#94a3b8' : '#cd7f32' }}>
-            {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
-          </span>
-        ) : (
-          <span className="rank-num-plain">{isTied ? '—' : rank}</span>
-        )}
+    <tr className={`rank-row ${isTop3 ? `rank-row--top${rank}` : ''} ${finalScore?.is_tied ? 'rank-row--tied' : ''}`}>
+      <td className="rank-col-num">
+        {rank === 1 && <span className="rank-badge rank-badge--1">🥇 1</span>}
+        {rank === 2 && <span className="rank-badge rank-badge--2">🥈 2</span>}
+        {rank === 3 && <span className="rank-badge rank-badge--3">🥉 3</span>}
+        {rank > 3  && <span className="rank-num">#{rank}</span>}
       </td>
-      <td>
-        <div className="rank-name">{participant.group_name}</div>
-        <div className="rank-school">{participant.school_name}</div>
+      <td className="rank-col-name">
+        <div className="rank-group-name">{participant.group_name}</div>
+        <div className="rank-school">{participant.school_name || '—'} · No. {participant.no_urut}</div>
       </td>
-      <td>
-        <span className={`badge ${participant.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>
+      <td className="rank-col-kat">
+        <span className={`badge badge-xs ${participant.kategori === 'smp' ? 'badge-gold' : 'badge-green'}`}>
           {participant.kategori?.toUpperCase()}
         </span>
       </td>
-      {/* Breakdown per bidang */}
-      <td className="rank-bidang-cell">{formatScore(finalScore?.nilai_adab, 1)}</td>
-      <td className="rank-bidang-cell">{formatScore(finalScore?.nilai_vokal, 1)}</td>
-      <td className="rank-bidang-cell">{formatScore(finalScore?.nilai_banjari, 1)}</td>
-      <td className="rank-score-cell" style={{ color: isTied ? 'var(--gold-400)' : (grade?.color || 'var(--accent-primary)') }}>
-        {finalScore?.nilai_utama != null ? formatScore(finalScore.nilai_utama) : '—'}
-        {isTied && (
-          <div style={{ fontSize: '0.625rem', color: 'var(--gold-400)', fontWeight: 600, marginTop: 2 }}>SERI</div>
-        )}
+      <td className="rank-col-score">{formatScore(finalScore?.nilai_adab)}</td>
+      <td className="rank-col-score">{formatScore(finalScore?.nilai_vokal)}</td>
+      <td className="rank-col-score">{formatScore(finalScore?.nilai_banjari)}</td>
+      <td className="rank-col-total">
+        <strong>{formatScore(finalScore?.nilai_utama)}</strong>
       </td>
-      <td>
-        {isTied ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--gold-400)', fontSize: '0.75rem', fontWeight: 600 }}>
-            <AlertTriangle size={12} /> Perlu Keputusan Panitia
-          </span>
-        ) : grade ? (
-          <span style={{ color: grade.color, fontWeight: 600, fontSize: '0.8125rem' }}>
+      <td className="rank-col-predikat">
+        {grade ? (
+          <span className="badge badge-xs" style={{ color: grade.color, background: `${grade.color}15`, border: `1px solid ${grade.color}40` }}>
             {grade.emoji} {grade.label}
           </span>
-        ) : null}
+        ) : '—'}
+        {finalScore?.is_tied && (
+          <span className="badge badge-xs badge-gold" style={{ marginLeft: 4 }} title="Nilai sama — tie breaker via nilai vokal">
+            SERI
+          </span>
+        )}
       </td>
     </tr>
   );
 }
 
 export default function RankingPage() {
-  const { user, isAdmin, isJuri } = useAuthStore();
+  const { isAdmin } = useAuthStore();
   const [rankingData,  setRankingData]  = useState([]);
   const [jingleData,   setJingleData]   = useState([]);
-  const [settings,     setSettings]     = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastUpdated,  setLastUpdated]  = useState(null);
   const [loading,      setLoading]      = useState(true);
@@ -106,17 +92,12 @@ export default function RankingPage() {
   const [showJingle,   setShowJingle]   = useState(false);
 
   const loadRanking = useCallback(async () => {
-    const { data: settingsData } = await supabase
-      .from('event_settings').select('*').eq('id', 1).single();
-    setSettings(settingsData);
-
     const [{ data: participants }, { data: finalScores }] = await Promise.all([
       supabase.from('participants').select('*'),
       supabase.from('final_scores').select('*'),
     ]);
 
     if (participants && finalScores) {
-      // Ranking utama: Adab + Vokal + Banjari (maks 100)
       const withScores = participants.map(p => ({
         participant: p,
         finalScore:  finalScores.find(f => f.participant_id === p.id) || null,
@@ -129,7 +110,6 @@ export default function RankingPage() {
         )
       );
 
-      // Assign ranking (tied = same rank, skip next)
       let rank = 1;
       const ranked = sorted.map((item, idx) => {
         if (idx > 0) {
@@ -145,7 +125,6 @@ export default function RankingPage() {
 
       setRankingData(ranked);
 
-      // Jingle terpisah
       const jingle = participants.map(p => ({
         participant: p,
         nilai_jingle: finalScores.find(f => f.participant_id === p.id)?.nilai_jingle ?? null,
@@ -159,9 +138,16 @@ export default function RankingPage() {
   }, []);
 
   useEffect(() => {
-    loadRanking();
-    const interval = setInterval(loadRanking, 30000);
-    return () => clearInterval(interval);
+    let active = true;
+    const fetchRanking = async () => {
+      if (active) await loadRanking();
+    };
+    fetchRanking();
+    const interval = setInterval(fetchRanking, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [loadRanking]);
 
   const toggleFullscreen = () => {
@@ -185,7 +171,6 @@ export default function RankingPage() {
     : rankingData.filter(d => d.participant.kategori === filterKat);
 
   const top3   = filtered.slice(0, 3);
-  const others = filtered.slice(3);
   const hasTied = filtered.some(d => d.finalScore?.is_tied);
 
   if (loading) return (

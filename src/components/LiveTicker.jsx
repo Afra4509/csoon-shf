@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
-import { formatScore } from '../utils/scoreCalc';
 import { Radio } from 'lucide-react';
 import './LiveTicker.css';
 
@@ -11,11 +10,6 @@ export default function LiveTicker() {
 
   useEffect(() => {
     async function loadData() {
-      const { data: settings } = await supabase
-        .from('event_settings')
-        .select('ranking_published, scoring_finalized')
-        .single();
-
       const msgs = [];
 
       const [{ data: finalScores }, { data: parts }] = await Promise.all([

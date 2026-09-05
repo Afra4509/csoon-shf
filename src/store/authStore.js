@@ -44,7 +44,7 @@ export const useAuthStore = create((set, get) => ({
           _attachAuthListener();
           return;
         }
-      } catch (_) {
+      } catch {
         localStorage.removeItem(LS_ADMIN);
       }
     }
@@ -74,7 +74,7 @@ export const useAuthStore = create((set, get) => ({
         } else {
           localStorage.removeItem(LS_REF);
         }
-      } catch (_) {
+      } catch {
         localStorage.removeItem(LS_REF);
       }
     }

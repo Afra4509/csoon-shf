@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase, supabaseAdmin } from '../supabase';
 
-export const useEventStore = create((set, get) => ({
+export const useEventStore = create((set) => ({
   settings: null,
   loading:  false,
 

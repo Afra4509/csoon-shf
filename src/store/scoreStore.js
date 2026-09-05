@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { supabase, supabaseAdmin } from '../supabase';
-import { calcSubtotalKriteria, calcBidangTotal, calcNilaiUtama, compareRanking, BIDANG_CRITERIA_MAX } from '../utils/scoreCalc';
+import { supabaseAdmin } from '../supabase';
+import { calcBidangTotal, calcNilaiUtama, compareRanking, BIDANG_CRITERIA_MAX } from '../utils/scoreCalc';
 
 // ── Score Store v3 — SHF Official Scoring System ──────────
 export const useScoreStore = create((set, get) => ({
@@ -110,7 +110,7 @@ export const useScoreStore = create((set, get) => ({
 
   // ── Admin: recalculate final scores ───────────────────────
   recalculateFinalScores: async () => {
-    const { participants, allScores, allNotes } = get();
+    const { participants, allScores } = get();
     if (!participants.length) return;
 
     const upserts = participants.map(p => {

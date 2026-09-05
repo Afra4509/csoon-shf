@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Edit3, History, LogOut, Save,
-  CheckCircle, Clock, Search, AlertCircle, Menu,
-  RefreshCw, ChevronRight, Award, Minus, Plus, Trophy
+  CheckCircle, Search, AlertCircle, Menu,
+  RefreshCw, ChevronRight, Trophy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useScoreStore } from '../store/scoreStore';
-import { calcSubtotalByField, BIDANG_CRITERIA_MAX, calcBidangTotal, formatScore } from '../utils/scoreCalc';
+import { BIDANG_CRITERIA_MAX, calcBidangTotal, formatScore } from '../utils/scoreCalc';
 import './JuriPanel.css';
 
 /* ── Konfigurasi bidang ─────────────────────────────────── */
@@ -567,7 +567,7 @@ function InputNilaiTab({ user, participants, allScores, allNotes, scoringCriteri
 }
 
 /* ── Tab: Riwayat Penilaian ─────────────────────────────── */
-function RiwayatTab({ user, participants, allScores, allNotes, scoringCriteria }) {
+function RiwayatTab({ user, participants, allScores, scoringCriteria }) {
   const bidang  = user?.bidang;
   const bidangCfg = BIDANG_CONFIG[bidang] || {};
   const criteria = scoringCriteria.filter(c => c.field_id === bidang);
@@ -609,7 +609,6 @@ function RiwayatTab({ user, participants, allScores, allNotes, scoringCriteria }
               ) : scoredParticipantIds.map(pid => {
                 const p       = participants.find(x => x.id === pid);
                 const pScores = myScores.filter(s => s.participant_id === pid);
-                const note    = allNotes.find(n => n.participant_id === pid && n.field_id === bidang && n.judge_id === user?.id);
                 const maks    = BIDANG_CRITERIA_MAX[bidang] ?? 10;
                 const result  = calcBidangTotal(pScores, 0, bidang);
                 const latestScore = pScores.reduce((a, b) =>
@@ -798,7 +797,6 @@ export default function JuriPanel() {
               user={user}
               participants={participants}
               allScores={allScores}
-              allNotes={allNotes}
               scoringCriteria={scoringCriteria}
             />
           )}

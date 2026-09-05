@@ -25,7 +25,7 @@ try {
     auth = getAuth(app);
     isFirebaseAvailable = true;
   }
-} catch (e) {
+} catch {
   console.warn('[SHF] Firebase not configured — running in mock mode');
 }
 

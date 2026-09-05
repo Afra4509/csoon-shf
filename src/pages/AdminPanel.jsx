@@ -2,16 +2,16 @@
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Edit3, Download, LogOut, Search,
-  CheckCircle, Clock, Zap, BarChart2, Save, X, AlertCircle,
-  Menu, Plus, ShieldCheck, Trophy, Lock, Unlock, Eye, EyeOff,
-  RefreshCw, Key, UserPlus, Upload, ChevronDown, ChevronUp, Star, Trash2
+  CheckCircle, Clock, Zap, BarChart2, X, AlertCircle,
+  Menu, ShieldCheck, Trophy, Eye, EyeOff,
+  RefreshCw, Key, UserPlus, ChevronDown, ChevronUp, Star, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { useScoreStore } from '../store/scoreStore';
 import { useJuriStore } from '../store/juriStore';
 import { useEventStore } from '../store/eventStore';
-import { formatScore, getScoreGrade, calcBidangTotal, calcSubtotalKriteria, getStatusPenilaian } from '../utils/scoreCalc';
+import { formatScore, calcBidangTotal, getStatusPenilaian, compareRanking } from '../utils/scoreCalc';
 import './AdminPanel.css';
 
 const NAV_ITEMS = [
@@ -330,7 +330,7 @@ function PesertaTab({ participants, updateStatus, createParticipant, updateParti
 }
 
 /* ── Juri Management Tab ── */
-function JuriTab({ judges, createJudge, updateJudge, deleteJudge, resetJudgePassword, participants, allScores }) {
+function JuriTab({ judges, createJudge, updateJudge, deleteJudge, resetJudgePassword }) {
   const [showModal,    setShowModal]    = useState(false);
   const [resetTarget,  setResetTarget]  = useState(null);
   const [newPassword,  setNewPassword]  = useState('');
@@ -532,7 +532,7 @@ function NilaiTab({ participants, allScores, allNotes, finalScores, resetPartici
                   {BIDANG_LIST.map(b => {
                     const bScores = allScores.filter(s => s.participant_id === p.id && s.field_id === b.id);
                     const bNote   = allNotes.find(n => n.participant_id === p.id && n.field_id === b.id);
-                    const bResult = calcBidangTotal(bScores, bNote?.pengurangan || 0);
+                    const bResult = calcBidangTotal(bScores, bNote?.pengurangan || 0, b.id);
 
                     return (
                       <div key={b.id} style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: 12, border: `1px solid ${b.color}30` }}>
@@ -625,7 +625,7 @@ function NilaiTab({ participants, allScores, allNotes, finalScores, resetPartici
 }
 
 /* ── Ranking Tab ── */
-function RankingTab({ participants, finalScores, settings, finalizeScoring, undoFinalize, publishRanking, unpublishRanking, recalcFinalScores }) {
+function RankingTab({ participants, finalScores, settings, publishRanking, unpublishRanking, recalcFinalScores }) {
   const [loading, setLoading] = useState(false);
 
   const handleRecalc = async () => {
@@ -697,13 +697,10 @@ function RankingTab({ participants, finalScores, settings, finalizeScoring, undo
               <tr><th>Rank</th><th>Nama Grup</th><th>Tingkat</th><th>Adab</th><th>Vokal</th><th>Banjari</th><th>Total Utama</th><th>Status</th></tr>
             </thead>
             <tbody>
-              {/* Gunakan data ranking ter-sort dari store (harus sort lokal karena belum ada tabel ranking_history) */}
+              {/* Gunakan data ranking ter-sort dari store */}
               {[...finalScores]
                 .filter(f => f.is_complete)
-                .sort((a, b) => {
-                  if (b.nilai_utama !== a.nilai_utama) return b.nilai_utama - a.nilai_utama;
-                  return b.nilai_vokal - a.nilai_vokal;
-                })
+                .sort(compareRanking)
                 .map((f, i) => {
                   const p = participants.find(x => x.id === f.participant_id);
                   if (!p) return null;
@@ -778,7 +775,7 @@ export default function AdminPanel() {
   } = useScoreStore();
 
   const { judges, fetchJudges, createJudge, updateJudge, deleteJudge, resetJudgePassword, getJudgeProgress } = useJuriStore();
-  const { settings, fetchSettings, finalizeScoring, undoFinalize, publishRanking, unpublishRanking } = useEventStore();
+  const { settings, fetchSettings, publishRanking, unpublishRanking } = useEventStore();
 
   useEffect(() => {
     fetchAllParticipants();
@@ -859,7 +856,7 @@ export default function AdminPanel() {
           {activeTab === 'peserta' && <PesertaTab participants={participants} updateStatus={updateParticipantStatus} createParticipant={createParticipant} updateParticipant={updateParticipant} deleteParticipant={deleteParticipant} />}
           {activeTab === 'juri' && <JuriTab judges={judges} createJudge={createJudge} updateJudge={updateJudge} deleteJudge={deleteJudge} resetJudgePassword={resetJudgePassword} />}
           {activeTab === 'nilai' && <NilaiTab participants={participants} allScores={allScores} allNotes={allNotes} finalScores={finalScores} resetParticipantScores={resetParticipantScores} />}
-          {activeTab === 'ranking' && <RankingTab participants={participants} finalScores={finalScores} settings={settings} finalizeScoring={finalizeScoring} undoFinalize={undoFinalize} publishRanking={publishRanking} unpublishRanking={unpublishRanking} recalcFinalScores={recalculateFinalScores} />}
+          {activeTab === 'ranking' && <RankingTab participants={participants} finalScores={finalScores} settings={settings} publishRanking={publishRanking} unpublishRanking={unpublishRanking} recalcFinalScores={recalculateFinalScores} />}
           {activeTab === 'export' && <ExportTab exportCSV={exportCSV} />}
         </div>
       </div>

@@ -163,11 +163,11 @@ export function formatScore(val, decimals = 2) {
  */
 export function getScoreGrade(score) {
   const s = parseFloat(score) || 0;
-  if (s >= 90) return { label: 'Istimewa',       color: 'var(--gold-400)',    emoji: '🏆' };
-  if (s >= 80) return { label: 'Sangat Baik',    color: 'var(--emerald-400)', emoji: '⭐' };
-  if (s >= 70) return { label: 'Baik',           color: 'var(--emerald-500)', emoji: '✅' };
-  if (s >= 60) return { label: 'Cukup',          color: '#60a5fa',            emoji: '📋' };
-  return              { label: 'Perlu Perbaikan', color: 'var(--text-muted)',  emoji: '📝' };
+  if (s >= 90) return { label: 'Istimewa', grade: 'Istimewa', color: 'var(--gold-400)', emoji: '🏆' };
+  if (s >= 80) return { label: 'Sangat Baik', grade: 'Sangat Baik', color: 'var(--emerald-400)', emoji: '⭐' };
+  if (s >= 70) return { label: 'Baik', grade: 'Baik', color: 'var(--emerald-500)', emoji: '✅' };
+  if (s >= 60) return { label: 'Cukup', grade: 'Cukup', color: '#60a5fa', emoji: '📋' };
+  return { label: 'Perlu Perbaikan', grade: 'Perlu Perbaikan', color: 'var(--text-muted)', emoji: '📝' };
 }
 
 // ── Legacy aliases (backward compat) ──────────────────────────
